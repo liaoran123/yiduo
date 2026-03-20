@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "MoonBit Run",
+      "type": "moonbit",
+      "request": "launch",
+      "program": "${workspaceFolder}",
+      "stopOnEntry": false
+    },
+    {
+      "name": "MoonBit Test",
+      "type": "moonbit",
+      "request": "launch",
+      "program": "${workspaceFolder}",
+      "args": ["test"],
+      "stopOnEntry": false
+    }
+  ]
+}
