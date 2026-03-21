@@ -222,7 +222,6 @@ echo "构建完成！"
 
 - 项目主页：[GitHub 仓库](https://github.com/liaoran123/yiduo)
 - 问题反馈：[Issue 页面](https://github.com/liaoran123/yiduo/issues)
-- 讨论社区：[Discord 频道](https://discord.gg/yiduo-os)
 
 ---
 
