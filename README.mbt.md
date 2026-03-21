@@ -61,7 +61,7 @@
 ## 项目结构
 
 ```
-d:\jiuzhang\
+d:\yiduo\
 ├── cmd/                # 命令行工具
 │   └── main/           # 主程序
 ├── 操作系统/           # 操作系统相关文档
@@ -72,7 +72,7 @@ d:\jiuzhang\
 ├── yiduo_wbtest.mbt    # 白盒测试文件
 ├── moon.mod.json       # MoonBit 模块配置
 ├── moon.pkg            # MoonBit 包配置
-└── README.mbt.md       # 项目说明
+└── README.md           # 项目说明
 ```
 
 ## 快速开始
@@ -165,10 +165,7 @@ fn main {
 
 | 语言 | 应用场景 | 优势 |
 |------|----------|------|
-| MoonBit | 系统级开发、应用开发 | 安全、高效、跨平台、支持 Wasm 和 Native 编译 |
-| Rust | 内核/驱动开发 | 内存安全、高性能、无 GC |
-| C/C++ | 高性能计算、硬件驱动 | 直接硬件访问、成熟生态 |
-| Python | AI 应用、脚本 | 丰富的 AI 库、开发效率高 |
+| MoonBit | 全栈开发（应用层、系统服务层、内核/驱动层、高性能计算层） | 安全、高效、跨平台、支持 Wasm 和 Native 编译 |
 
 ### 核心技术
 
