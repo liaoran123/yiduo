@@ -4,5 +4,4 @@
 
 options(
   "is-main": true,
-  "native-stub": ["ffi_stub.c"]
 )
