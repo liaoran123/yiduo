@@ -1,0 +1,14 @@
+// 可读写的流
+resource stream {
+  // 打开一个流（传入设备路径或ID）
+  static open(device_id: string) -> result<stream, Error>
+  
+  // 读取数据
+  read(len: u32) -> result<list<u8>, Error>
+  
+  // 写入数据
+  write(data: list<u8>) -> result<unit, Error>
+  
+  // 刷新缓冲区
+  flush() -> result<unit, Error>
+}

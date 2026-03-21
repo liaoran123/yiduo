@@ -1,0 +1,13 @@
+// 所有硬件操作的返回状态
+type result<T, E> = {
+  ok: T,
+  err: E,
+}
+
+// 核心错误类型
+enum Error {
+  Success,
+  InvalidArg,
+  IoError,
+  PermissionDenied,
+}

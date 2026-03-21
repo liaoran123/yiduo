@@ -1,0 +1,7 @@
+// import {
+//   "username/jiuzhang" @lib,
+// }
+
+options(
+  "is-main": true,
+)

@@ -1,0 +1,17 @@
+// 统一硬件抽象层接口
+
+use base.{Error, result}
+use memory.{DataType, compute_buffer}
+use stream.{stream}
+
+// 主世界定义
+world unihal {
+  // 导入基础类型
+  import base
+  import memory
+  import stream
+  
+  // 导出核心接口
+  export memory: memory
+  export stream: stream
+}

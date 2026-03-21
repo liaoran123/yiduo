@@ -1,201 +1,218 @@
 # 一多 - 下一代跨语言原生操作系统
+技术白皮书与开发者指南
 
-## 项目简介
+项目状态：架构设计与原型开发
+核心理念：能 Wasm 就 Wasm，必须 Native 则 Native
 
-一多（Yiduo）是一个基于混合架构的下一代跨语言原生操作系统，旨在通过 WebAssembly 组件模型实现语言的统一，同时在必要时使用 Native 代码突破性能和硬件访问的限制。
+## 核心架构设计
 
-### 核心特性
+### 1.1 混合架构模型
+一多操作系统采用分层混合架构，利用 MoonBit 语言的双重编译能力（Wasm + Native），在保证系统安全与跨平台性的同时，保留对物理硬件的直接控制力。
 
-- **跨语言统一**：通过 WebAssembly 组件模型，支持多种编程语言无缝集成
-- **高性能**：在关键路径使用 Native 代码，确保系统性能
-- **安全性**：基于能力模型的安全隔离，保护系统和用户数据
-- **可扩展性**：模块化设计，支持动态加载和卸载组件
-- **跨平台**：一次编译，到处运行，支持多种硬件架构
-- **生态兼容性**：支持现有的系统库和第三方库的集成
+| 层级 | 技术栈 | 运行模式 | 核心职责 | 典型组件 |
+|------|--------|----------|----------|----------|
+| 应用层 | MoonBit (Wasm) | 沙箱隔离 | 业务逻辑、UI、AI 编排 | 办公套件、AI 助手 |
+| 服务层 | MoonBit (Wasm + WASI) | 标准化接口 | 网络、文件、配置管理 | Web 服务器、日志服务 |
+| 内核层 | MoonBit (Native) | 特权模式 | 内存管理、进程调度、中断 | 内存管理单元 (MMU) |
+| 驱动层 | MoonBit (Native) | 硬件直连 | 硬件驱动、GPU/NPU 接口 | 显卡驱动、NPU 推理引擎 |
 
-## 技术架构
+### 1.2 关键技术栈
+- **MoonBit**：全栈开发语言（应用到内核）。
+- **Wasmtime**：WebAssembly 运行时，负责执行 Wasm 组件。
+- **WASI (Preview 2)**：定义系统服务的标准接口。
+- **UniHAL (统一硬件抽象层)**：由 MoonBit 编写的硬件抽象层，屏蔽底层硬件差异。
 
-### 1. 混合架构理念
+## 项目结构与工程配置
 
-"能 Wasm 就 Wasm，必须 Native 则 Native"：
-- **能 Wasm 就 Wasm**：为了开发效率和生态兼容
-- **必须 Native 则 Native**：为了突破物理硬件的限制
-
-### 2. 分层架构
-
-| 层级 | 推荐技术 | 原因 | 示例功能 |
-|------|---------|------|----------|
-| 应用层 | Wasm (MoonBit) | 90% 的业务逻辑、UI、AI 编排。追求安全、跨平台、热更新。 | 办公软件、浏览器、AI 应用 |
-| 系统服务层 | Wasm (MoonBit + WASI) | 网络服务、日志、配置管理。利用 WASI 标准接口。 | 网络协议栈、日志服务、配置管理 |
-| 内核/驱动层 | Native (MoonBit) | 内存管理、中断处理、硬件驱动、文件系统底层。 | 内存管理、中断处理、硬件驱动 |
-| 高性能计算层 | Native (MoonBit) | GPU 驱动、NPU 推理核心、视频编解码。 | GPU 加速、视频编解码、AI 推理 |
-
-### 3. 系统架构
+基于 MoonBit 的项目规范，一多操作系统的目录结构如下：
 
 ```
-一多操作系统
-├── 应用层
-│   ├── Wasm 应用组件
-│   ├── UI 框架
-│   └── AI 编排服务
-├── 系统服务层
-│   ├── WASI 系统服务
-│   ├── 网络服务
-│   ├── 日志服务
-│   └── 配置管理
-├── 内核/驱动层
-│   ├── 内核核心
-│   ├── 内存管理
-│   ├── 中断处理
-│   └── 硬件驱动
-├── 高性能计算层
-│   ├── GPU 驱动
-│   ├── NPU 推理核心
-│   └── 视频编解码
-└── 运行时
-    ├── MoonBit 运行时
-    ├── WebAssembly 运行时 (Wasmtime)
-    └── 组件管理器
+yiduo/
+├── kernel/               # 内核层
+│   ├── boot/             # 启动代码
+│   ├── mm/               # 内存管理
+│   ├── drivers/          # 硬件驱动
+│   └── kernel.mbt        # 内核主文件
+├── runtime/              # 运行时
+│   ├── wasm/             # Wasm 运行时
+│   └── adapter/          # 适配器层
+│       ├── compute/      # 计算适配器
+│       ├── stream/       # 流适配器
+│       └── adapter_manager.mbt   # 适配器管理器
+├── interfaces/           # 接口定义
+│   ├── base.wit          # 基础接口
+│   ├── memory.wit        # 内存接口
+│   ├── stream.wit        # 流接口
+│   └── unihal.wit        # 主接口
+├── apps/                 # 应用层
+│   ├── unihal_demo/      # UniHAL 演示
+│   └── hello/            # Hello World
+├── build/                # 构建脚本
+│   ├── build.sh          # 主构建脚本
+│   └── test.sh           # 测试脚本
+├── docs/                 # 文档
+│   ├── architecture.md   # 架构设计
+│   └── usage.md          # 使用说明
+├── moon.mod.json         # 根模块配置
+└── README.md             # 项目说明
 ```
 
-## 项目结构
+## 核心代码实现
 
+### 3.1 内核层：内存管理 (Native)
+文件路径：kernel/mm/allocator.mbt
+这是系统的核心，必须使用 Native 模式以获得直接操作物理内存的能力。
+
+```moonbit nocheck
+// kernel/mm/allocator.mbt
+// 编译目标：Native (直接运行在物理机)
+
+/// 物理内存分配器
+type PhysAllocator
+
+/// 初始化物理内存管理
+/// @native c "init_phys_memory"
+fn init() -> Unit
+
+/// 分配指定大小的物理页
+/// @native c "alloc_pages"
+fn alloc_pages(count: Int) -> Option[UInt64]
+
+/// 释放物理页
+/// @native c "free_pages"
+fn free_pages(addr: UInt64, count: Int) -> Bool
+
+/// @main
+fn kernel_main {
+  init()
+  println("一多内核：内存管理单元初始化完成")
+}
 ```
-d:\yiduo\
-├── cmd/                # 命令行工具
-│   └── main/           # 主程序
-├── 操作系统/           # 操作系统相关文档
-│   └── 技术方案/       # 技术方案文档
-├── .vscode/            # VS Code 配置
-├── yiduo.mbt           # 核心模块
-├── yiduo_test.mbt      # 测试文件
-├── yiduo_wbtest.mbt    # 白盒测试文件
-├── moon.mod.json       # MoonBit 模块配置
-├── moon.pkg            # MoonBit 包配置
-└── README.md           # 项目说明
+
+### 3.2 服务层：网络服务 (Wasm)
+文件路径：runtime/network/tcp_stack.mbt
+利用 Wasm 的沙箱特性保证网络服务的安全性。
+
+```moonbit nocheck
+// runtime/network/tcp_stack.mbt
+// 编译目标：Wasm (沙箱运行)
+
+/// 导入 WASI 网络接口
+import wasi:io
+import wasi:sockets/tcp
+
+/// 处理 TCP 连接
+fn handle_connection(conn: tcp:Socket) -> Result[Unit, String] {
+  let data = io:read(conn, 1024)
+  match data {
+    Ok(bytes) => {
+      println("收到数据: " + bytes.to_string())
+      io:write(conn, "HTTP/1.1 200 OK\r\nHello from Yiduo OS")
+      Ok(())
+    }
+    Err(e) => Err("读取错误: " + e)
+  }
+}
+
+/// 启动 TCP 服务器
+fn start_server(port: Int) -> tcp:Socket {
+  let sock = tcp:Socket::new_ipv4()
+  tcp:bind(sock, "0.0.0.0", port)
+  tcp:listen(sock, 10)
+  println("TCP 服务已启动，端口: " + port.to_string())
+  sock
+}
 ```
 
-## 快速开始
+### 3.3 应用层：AI 编排 (Wasm)
+文件路径：apps/ai_shell/shell.mbt
+展示如何调用底层 Native 驱动进行高性能 AI 推理。
 
-### 1. 环境要求
+```moonbit nocheck
+// apps/ai_shell/shell.mbt
+// 编译目标：Wasm (安全沙箱)
 
-- MoonBit 编译器
-- WebAssembly 运行时 (Wasmtime)
+/// 定义 NPU 推理接口 (WIT 绑定)
+/// @component "npu" "infer"
+fn npu_infer(model_path: String, input_data: List[Float]) -> List[Float]
 
-### 2. 构建与运行
+/// 定义文件系统接口 (WASI)
+/// @component "wasi:filesystem" "read"
+fn read_file(path: String) -> Result[String, String]
 
-#### 运行 MoonBit 应用
+fn main {
+  println("一多 AI 终端启动")
+  
+  // 1. 读取配置 (WASI)
+  match read_file("/config/model.cfg") {
+    Ok(cfg) => println("配置加载成功"),
+    Err(e) => println("配置错误: " + e)
+  }
+
+  // 2. 调用 NPU 驱动 (Native FFI)
+  // 注意：这里通过组件模型调用，底层由 Native 实现
+  let result = npu_infer(
+    "/models/llm_v3.wasm",
+    [0.1, 0.5, 0.9]
+  )
+  
+  println("AI 推理结果: " + result.to_string())
+}
+```
+
+## 构建与运行流程
+
+### 4.1 构建脚本 (build.sh)
 
 ```bash
-# 运行主程序
-moon run --target=wasm-gc cmd/main
+#!/bin/bash
+echo "开始构建 一多操作系统..."
 
-# 或使用 Native 目标
-moon run --target=native cmd/main
+# 创建输出目录
+mkdir -p bin/services bin/apps
+
+# 构建内核 (Native)
+echo "构建内核..."
+moon build --target=native kernel/ -o bin/yiduo_kernel
+
+# 构建系统服务 (Wasm)
+echo "构建系统服务..."
+moon build --target=wasm-gc runtime/ -o bin/services/
+
+# 构建应用 (Wasm)
+echo "构建应用..."
+moon build --target=wasm-gc apps/ -o bin/apps/
+
+echo "构建完成！"
 ```
 
-### 3. 开发流程
-
-1. **定义 WIT 接口**：在 `components/interface.wit` 中定义组件接口
-2. **实现组件**：使用 MoonBit、C/C++、Rust 等语言实现组件
-3. **编译**：将组件编译成 Wasm 或 Native 代码
-4. **在 MoonBit 中使用**：通过导入接口使用组件功能
-
-## 开发指南
-
-### 1. MoonBit 接口定义
-
-```moonbit nocheck
-// cmd/main/main.mbt
-///|
-fn add(a : Int, b : Int) -> Int = "math" "add"
-
-///|
-fn main {
-  let sum = add(5, 3)
-  println("5 + 3 = " + sum.to_string())
-  println("Hello，一多，下一代跨语言原生操作系统")
-}
-```
-
-### 2. 组件间通信
-
-```moonbit nocheck
-// 导入其他组件的接口
-///|
-fn add(a : Int, b : Int) -> Int = "math" "add"
-
-///|
-fn read_file(path : String) -> String = "filesystem" "read"
-
-// 调用其他组件的函数
-
-///|
-fn main {
-  let sum = add(5, 3)
-  println("5 + 3 = " + sum.to_string())
-
-  let content = read_file("/etc/config")
-  println("Config content: " + content)
-
-  println("Hello，一多，下一代跨语言原生操作系统")
-}
-```
+### 4.2 运行时启动流程
+1. Bootloader 加载 yiduo_kernel (Native)。
+2. 内核初始化硬件，启动 Wasmtime 运行时。
+3. 运行时加载 bin/services/ 中的核心服务。
+4. 用户空间启动，加载 bin/apps/ 中的应用。
 
 ## 贡献指南
 
-1. **Fork 项目**：在 GitHub 上 fork 项目到自己的账户
-2. **创建分支**：创建一个新的分支进行开发
-3. **提交代码**：提交代码并编写清晰的 commit 信息
-4. **创建 PR**：创建 Pull Request 到主分支
-5. **代码审查**：等待代码审查和合并
+### 5.1 开发规范
+- **命名规范**：
+  - Native 层：snake_case (C 风格兼容)
+  - Wasm 层：camelCase (MoonBit 风格)
+- **接口定义**：
+  - 所有跨层调用必须通过 interfaces/ 目录下的 .wit 文件定义。
+- **代码审查**：
+  - Native 代码必须进行内存安全审查。
+  - Wasm 代码必须进行接口兼容性审查。
 
-### 开发规范
+### 5.2 测试策略
+- **单元测试**：所有模块必须包含 _test 文件。
+- **集成测试**：模拟硬件环境测试 Native 与 Wasm 的交互。
 
-- 代码风格：遵循项目的代码风格指南
-- 测试：为新功能编写测试
-- 文档：更新相关文档
-- 性能：考虑代码性能影响
+## 未来路线图
 
-## 技术栈
-
-### 主要语言
-
-| 语言 | 应用场景 | 优势 |
-|------|----------|------|
-| MoonBit | 全栈开发（应用层、系统服务层、内核/驱动层、高性能计算层） | 安全、高效、跨平台、支持 Wasm 和 Native 编译 |
-
-### 核心技术
-
-| 技术 | 用途 | 版本 |
-|------|------|------|
-| WebAssembly | 跨语言组件模型 | WebAssembly 2.0 + 组件模型 |
-| WASI | 系统接口标准 | WASI Preview 2 |
-| Wasmtime | WebAssembly 运行时 | 最新稳定版 |
-| MoonBit | 系统级语言 | 最新稳定版 |
-
-## 未来规划
-
-### 短期目标（1-2 年）
-
-- 完成核心架构实现
-- 支持基本硬件平台
-- 构建基础系统服务
-- 开发示例应用
-
-### 中期目标（2-3 年）
-
-- 完善生态系统
-- 支持更多硬件平台
-- 优化性能和安全性
-- 吸引第三方开发者
-
-### 长期目标（3+ 年）
-
-- 成为主流操作系统选择
-- 构建完整的应用生态
-- 推动 WebAssembly 标准发展
-- 引领下一代操作系统技术
+- **Phase 1 (原型)**：完成 MoonBit Native 内核与 Wasm 服务的通信。
+- **Phase 2 (硬件支持)**：实现 UniHAL，支持 x86_64 和 ARM64 架构。
+- **Phase 3 (AI 原生)**：集成 AI 驱动调度，实现自然语言操作系统交互。
 
 ## 许可证
 
