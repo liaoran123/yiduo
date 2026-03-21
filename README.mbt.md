@@ -11,12 +11,12 @@
 
 组合编程是一多操作系统的核心设计理念，类似于 Go、Rust 等现代语言的设计思想，通过组合简单、可复用的组件来构建复杂的系统，而不是通过继承或修改现有代码。
 
-| 层级 | 技术栈 | 运行模式 | 核心职责 | 典型组件 |
-|------|--------|----------|----------|----------|
-| 应用层 | MoonBit (Wasm) | 沙箱隔离 | 业务逻辑、UI、AI 编排 | 办公套件、AI 助手 |
-| 服务层 | MoonBit (Wasm + WASI) | 标准化接口 | 网络、文件、配置管理 | Web 服务器、日志服务 |
-| 内核层 | MoonBit (Native) | 特权模式 | 内存管理、进程调度、中断 | 内存管理单元 (MMU) |
-| 驱动层 | MoonBit (Native) | 硬件直连 | 硬件驱动、GPU/NPU 接口 | 显卡驱动、NPU 推理引擎 |
+| 组件层 | 技术栈 | 运行模式 | 核心职责 | 典型组件 |
+|--------|--------|----------|----------|----------|
+| 应用组件层 | MoonBit (Wasm) | 沙箱隔离 | 业务逻辑、UI、AI 编排 | 办公套件、AI 助手 |
+| 服务组件层 | MoonBit (Wasm + WASI) | 标准化接口 | 网络、文件、配置管理 | Web 服务器、日志服务 |
+| 基础底座层 | MoonBit (Native) | 特权模式 | 内存管理、进程调度、中断 | 内存管理单元 (MMU) |
+| 驱动组件层 | MoonBit (Native) | 硬件直连 | 硬件驱动、GPU/NPU 接口 | 显卡驱动、NPU 推理引擎 |
 
 ### 1.2 关键技术栈
 - **MoonBit**：全栈开发语言（应用到内核），支持组合式编程。
@@ -26,29 +26,29 @@
 
 ## 项目结构与工程配置
 
-基于 MoonBit 的项目规范，一多操作系统的目录结构如下：
+基于 MoonBit 的项目规范，一多操作系统采用组件化的目录结构如下：
 
 ```
 yiduo/
-├── kernel/               # 内核层
+├── kernel/               # 基础底座层
 │   ├── boot/             # 启动代码
 │   ├── mm/               # 内存管理
-│   ├── drivers/          # 硬件驱动
+│   ├── drivers/          # 驱动组件
 │   └── kernel.mbt        # 内核主文件
-├── runtime/              # 运行时
+├── runtime/              # 运行时与服务组件
 │   ├── wasm/             # Wasm 运行时
-│   └── adapter/          # 适配器层
+│   └── adapter/          # 适配器组件
 │       ├── compute/      # 计算适配器
 │       ├── stream/       # 流适配器
 │       └── adapter_manager.mbt   # 适配器管理器
-├── interfaces/           # 接口定义
+├── interfaces/           # 接口定义（WIT）
 │   ├── base.wit          # 基础接口
 │   ├── memory.wit        # 内存接口
 │   ├── stream.wit        # 流接口
 │   └── unihal.wit        # 主接口
-├── apps/                 # 应用层
-│   ├── unihal_demo/      # UniHAL 演示
-│   └── hello/            # Hello World
+├── apps/                 # 应用组件
+│   ├── unihal_demo/      # UniHAL 演示组件
+│   └── hello/            # Hello World 组件
 ├── build/                # 构建脚本
 │   ├── build.sh          # 主构建脚本
 │   └── test.sh           # 测试脚本
@@ -61,7 +61,7 @@ yiduo/
 
 ## 核心代码实现
 
-### 3.1 内核层：内存管理 (Native)
+### 3.1 基础底座层：内存管理 (Native)
 文件路径：kernel/mm/allocator.mbt
 这是系统的核心，必须使用 Native 模式以获得直接操作物理内存的能力。
 
@@ -91,7 +91,7 @@ fn kernel_main {
 }
 ```
 
-### 3.2 服务层：网络服务 (Wasm)
+### 3.2 服务组件层：网络服务 (Wasm)
 文件路径：runtime/network/tcp_stack.mbt
 利用 Wasm 的沙箱特性保证网络服务的安全性。
 
@@ -126,7 +126,7 @@ fn start_server(port: Int) -> tcp:Socket {
 }
 ```
 
-### 3.3 应用层：AI 编排 (Wasm)
+### 3.3 应用组件层：AI 编排 (Wasm)
 文件路径：apps/ai_shell/shell.mbt
 展示如何调用底层 Native 驱动进行高性能 AI 推理。
 
@@ -198,17 +198,23 @@ echo "构建完成！"
 
 ### 5.1 开发规范
 - **命名规范**：
-  - Native 层：snake_case (C 风格兼容)
-  - Wasm 层：camelCase (MoonBit 风格)
+  - Native 组件：snake_case (C 风格兼容)
+  - Wasm 组件：camelCase (MoonBit 风格)
 - **接口定义**：
-  - 所有跨层调用必须通过 interfaces/ 目录下的 .wit 文件定义。
+  - 所有组件间通信必须通过 interfaces/ 目录下的 .wit 文件定义。
+  - 组件接口应遵循单一职责原则，保持简洁明了。
+- **组件开发**：
+  - 每个组件应有明确的职责和边界
+  - 组件应通过标准接口与其他组件通信
+  - 避免组件间的直接依赖，通过接口进行解耦
 - **代码审查**：
-  - Native 代码必须进行内存安全审查。
-  - Wasm 代码必须进行接口兼容性审查。
+  - Native 组件必须进行内存安全审查。
+  - Wasm 组件必须进行接口兼容性审查。
 
 ### 5.2 测试策略
-- **单元测试**：所有模块必须包含 _test 文件。
-- **集成测试**：模拟硬件环境测试 Native 与 Wasm 的交互。
+- **单元测试**：所有组件必须包含 _test 文件，测试组件的独立功能。
+- **集成测试**：测试组件间的交互和组合。
+- **组件市场验证**：发布到组件市场的组件必须通过安全和兼容性测试。
 
 ## 未来路线图
 
