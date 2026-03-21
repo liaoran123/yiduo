@@ -5,16 +5,17 @@
       "name": "MoonBit Run",
       "type": "moonbit",
       "request": "launch",
-      "program": "${workspaceFolder}",
-      "stopOnEntry": false
+      "program": "${workspaceFolder}/src/main.mbt",
+      "stopOnEntry": false,
+      "cwd": "${workspaceFolder}"
     },
     {
       "name": "MoonBit Test",
       "type": "moonbit",
       "request": "launch",
-      "program": "${workspaceFolder}",
-      "args": ["test"],
-      "stopOnEntry": false
+      "program": "${workspaceFolder}/tests/test.mbt",
+      "stopOnEntry": false,
+      "cwd": "${workspaceFolder}"
     }
   ]
 }

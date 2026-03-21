@@ -1,0 +1,8 @@
+// import {
+//   "username/jiuzhang" @lib,
+// }
+
+options(
+  "is-main": true,
+  "native-stub": ["ffi_stub.c"]
+)
