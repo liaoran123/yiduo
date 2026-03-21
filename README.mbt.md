@@ -218,10 +218,6 @@ echo "构建完成！"
 
 本项目采用 Apache-2.0 许可证，详见 LICENSE 文件。
 
-## 联系方式
-
-- 项目主页：[GitHub 仓库](https://github.com/liaoran123/yiduo)
-- 问题反馈：[Issue 页面](https://github.com/liaoran123/yiduo/issues)
 
 ---
 
