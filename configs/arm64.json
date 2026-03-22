@@ -1,0 +1,27 @@
+{
+  "architecture": "arm64",
+  "target": "aarch64-unknown-none",
+  "features": [
+    "neon",
+    "crc",
+    "crypto"
+  ],
+  "memory": {
+    "base_address": "0x80000000",
+    "size": "0x40000000"
+  },
+  "devices": {
+    "uart": {
+      "base_address": "0x80000000",
+      "baud_rate": 115200
+    },
+    "timer": {
+      "base_address": "0x80001000",
+      "frequency": 1000000
+    }
+  },
+  "kernel": {
+    "entry_point": "0x80000000",
+    "stack_size": "0x10000"
+  }
+}

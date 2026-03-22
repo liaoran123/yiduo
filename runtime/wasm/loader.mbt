@@ -3,6 +3,7 @@ type WasmModule = {
   code: Array[UInt8]
   memory: Option[Array[UInt8]]
   exports: Map[String, Function]
+  imports: Map[String, Function]
 }
 
 // 加载 Wasm 模块
@@ -17,6 +18,7 @@ fn load_wasm_module(data: Array[UInt8]) -> Result[WasmModule, String] {
     code: data
     memory: Some(Array.create(1024 * 1024, 0))
     exports: Map.empty()
+    imports: Map.empty()
   })
 }
 
@@ -24,4 +26,11 @@ fn load_wasm_module(data: Array[UInt8]) -> Result[WasmModule, String] {
 fn execute_wasm_module(module: WasmModule) -> Result[Unit, String] {
   // 简化实现，实际需要执行 Wasm 指令
   Ok(())
+}
+
+// 注册 Native 函数到 Wasm 运行时
+fn register_function(name: String, func: Function) -> Unit {
+  // 简化实现，实际需要将函数添加到 Wasm 模块的 imports 中
+  let module = load_wasm_module(Array.empty()).unwrap()
+  module.imports.set(name, func)
 }

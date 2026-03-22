@@ -1,0 +1,26 @@
+{
+  "architecture": "riscv64",
+  "target": "riscv64-unknown-none-elf",
+  "features": [
+    "rv64imafd",
+    "c"
+  ],
+  "memory": {
+    "base_address": "0x80000000",
+    "size": "0x40000000"
+  },
+  "devices": {
+    "uart": {
+      "base_address": "0x10000000",
+      "baud_rate": 115200
+    },
+    "timer": {
+      "base_address": "0x10001000",
+      "frequency": 1000000
+    }
+  },
+  "kernel": {
+    "entry_point": "0x80000000",
+    "stack_size": "0x10000"
+  }
+}

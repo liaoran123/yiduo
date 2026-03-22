@@ -11,3 +11,13 @@ enum Error {
   IoError,
   PermissionDenied,
 }
+
+// 日志接口
+interface log {
+  log: func(msg: string) -> result<unit, Error>
+}
+
+// 时间接口
+interface time {
+  current_time: func() -> result<u64, Error>
+}

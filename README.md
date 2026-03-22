@@ -107,45 +107,108 @@
 
 ```
 yiduo/
-├── kernel/               # 基础底座层
-│   ├── boot/             # 启动代码
-│   ├── mm/               # 内存管理
-│   ├── drivers/          # 驱动组件
-│   └── kernel.mbt        # 内核主文件
-├── runtime/              # 运行时与服务组件
-│   ├── wasm/             # Wasm 运行时
-│   └── adapter/          # 适配器组件
-│       ├── compute/      # 计算适配器
-│       ├── stream/       # 流适配器
-│       └── adapter_manager.mbt   # 适配器管理器
-├── interfaces/           # 接口定义（WIT）
-│   ├── base.wit          # 基础接口
-│   ├── memory.wit        # 内存接口
-│   ├── stream.wit        # 流接口
-│   └── unihal.wit        # 主接口
+├── .githooks/            # Git 钩子
+├── .github/              # GitHub 配置
+│   └── workflows/        # CI/CD 工作流
+├── .vscode/              # VS Code 配置
 ├── apps/                 # 应用组件
-│   ├── unihal_demo/      # UniHAL 演示组件
-│   └── hello/            # Hello World 组件
-├── sdk/                  # 开发工具包
-│   ├── moonbit-sdk/      # MoonBit 语言 bindings
-│   ├── rust-sdk/         # Rust 语言 bindings
-│   └── cli/              # 命令行工具
-├── tests/                # 测试目录
-│   ├── unit/             # 单元测试
-│   ├── integration/      # 集成测试
-│   └── ci/               # 持续集成脚本
-├── configs/              # 配置文件
-│   ├── arm64.json        # ARM64 配置
-│   └── riscv64.json      # RISC-V 配置
+│   ├── ai_shell/         # AI 终端应用
+│   ├── hello/            # Hello World 组件
+│   └── unihal_demo/      # UniHAL 演示组件
 ├── build/                # 构建脚本
 │   ├── build.sh          # 主构建脚本
 │   └── test.sh           # 测试脚本
+├── cmd/                  # 命令行工具
+│   └── main/             # 主命令行入口
 ├── docs/                 # 文档
 │   ├── architecture.md   # 架构设计
 │   └── usage.md          # 使用说明
+├── interfaces/           # 接口定义（WIT）
+│   ├── base.wit          # 基础接口
+│   ├── memory.wit        # 内存接口
+│   ├── os.wit            # 操作系统接口
+│   ├── stream.wit        # 流接口
+│   └── unihal.wit        # 主接口
+├── kernel/               # 基础底座层
+│   ├── boot/             # 启动代码
+│   ├── drivers/          # 驱动组件
+│   ├── interface/        # 接口实现
+│   ├── mm/               # 内存管理
+│   ├── kernel.mbt        # 内核主文件
+│   └── moon.pkg          # 内核包配置
+├── runtime/              # 运行时与服务组件
+│   ├── adapter/          # 适配器组件
+│   │   ├── compute/      # 计算适配器
+│   │   ├── stream/       # 流适配器
+│   │   └── adapter_manager.mbt   # 适配器管理器
+│   └── wasm/             # Wasm 运行时
+├── services/             # 系统服务
+│   └── network/          # 网络服务
+├── .gitignore            # Git 忽略文件
+├── AGENTS.md             # 项目代理配置
+├── LICENSE               # 许可证文件
+├── README.md             # 项目说明
+├── build.sh              # 根目录构建脚本
 ├── moon.mod.json         # 根模块配置
-└── README.md             # 项目说明
+├── moon.pkg              # 根包配置
+├── yiduo.mbt             # 主文件
+├── yiduo_test.mbt        # 测试文件
+└── yiduo_wbtest.mbt      # 白盒测试文件
 ```
+
+### 接口定义（interfaces/）
+
+interfaces/ 目录包含了一多操作系统的核心接口定义，使用 WIT（WebAssembly Interface Types）格式编写。这些接口定义是系统的"宪法"，规定了组件间通信的标准规范。
+
+#### 作用
+- **标准化通信**：定义了组件间通信的标准接口，确保不同组件、不同语言之间的互操作性
+- **能力管理**：通过接口定义，实现了"硬件操作权"向"API 调用权"的转变，操作系统不再管理硬件，而是管理"能力"
+- **安全隔离**：应用只能通过接口调用系统能力，越界操作会被自动拦截
+
+#### 主要接口文件
+- **base.wit**：定义了基础的错误类型、返回结果类型以及核心接口（如 Log、Time 等）
+- **memory.wit**：定义了内存管理相关的接口
+- **stream.wit**：定义了流处理相关的接口
+- **unihal.wit**：定义了统一硬件抽象层的主接口
+
+#### 接口使用示例
+
+在 Wasm 组件中使用接口：
+
+```moonbit
+/// @component "base" "log"
+fn log(msg: String) -> Result[Unit, Error]
+
+fn main {
+  log("Hello from Wasm!")
+}
+```
+
+在 Native 组件中实现接口：
+
+```moonbit
+// 实现 log 函数
+fn log_impl(msg: String) -> Unit {
+  uart::uart_puts(msg + "\n")
+}
+
+// 注册接口
+fn register_os_interface() -> Unit {
+  wasm::register_function("log", log_impl)
+}
+```
+
+### 接口实现（kernel/interface/）
+
+kernel/interface/ 目录包含了接口的 Native 实现，负责将 WIT 接口映射到具体的系统实现。
+
+#### 主要文件
+- **os_impl.mbt**：实现了操作系统核心接口，如日志、时间等
+
+#### 实现原理
+- 通过 `@native` 标签标记底层 C 函数，实现对硬件的直接操作
+- 通过 `register_function` 函数，将 Native 实现注册到 Wasm 运行时
+- 实现了 Wasm 组件到 Native 组件的安全调用链路
 
 ## 核心代码实现
 
