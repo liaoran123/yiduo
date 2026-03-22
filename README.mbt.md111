@@ -49,6 +49,17 @@ yiduo/
 ├── apps/                 # 应用组件
 │   ├── unihal_demo/      # UniHAL 演示组件
 │   └── hello/            # Hello World 组件
+├── sdk/                  # 开发工具包
+│   ├── moonbit-sdk/      # MoonBit 语言 bindings
+│   ├── rust-sdk/         # Rust 语言 bindings
+│   └── cli/              # 命令行工具
+├── tests/                # 测试目录
+│   ├── unit/             # 单元测试
+│   ├── integration/      # 集成测试
+│   └── ci/               # 持续集成脚本
+├── configs/              # 配置文件
+│   ├── arm64.json        # ARM64 配置
+│   └── riscv64.json      # RISC-V 配置
 ├── build/                # 构建脚本
 │   ├── build.sh          # 主构建脚本
 │   └── test.sh           # 测试脚本
