@@ -1,24 +1,88 @@
 // 存储硬件接口
 
-use base.types.{result, buffer, size, offset}
+use base.types.{result, list, option}
 use base.error.{Error}
+use yiduo:capabilities.{power_saving, secure_element, diagnostics, firmware_update}
 
-// 存储接口
+package yiduo:unihal;
+
+/// 存储设备属性
+record device_property {
+    key: string,
+    value: string,
+}
+
+/// 存储设备信息
+record device_info {
+    vendor_id: u32,
+    device_id: u32,
+    model: string,
+    capacity: u64,
+    // 预留字段：未来如果增加了新的配置项，不需要修改接口定义
+    extensions: list<device_property>,
+}
+
+/// 存储区域描述
+record storage_region {
+    offset: u64,
+    size: u64,
+    flags: u32, // 读写权限等
+}
+
+/// 存储操作命令
+variant storage_command {
+    Read(storage_region),
+    Write(storage_region, u64), // buffer_id
+    Erase(storage_region),
+    Sync,
+    GetInfo,
+}
+
+/// 存储设备资源
+resource storage_device {
+    /// 发送命令到存储设备
+    /// @param command 存储操作命令
+    /// @return 操作结果或任务句柄
+    send_command: func(command: storage_command) -> result<u64, Error>
+    
+    /// 获取设备信息
+    get_info: func() -> result<device_info, Error>
+    
+    /// 获取设备属性
+    get_properties: func() -> result<list<device_property>, Error>
+    
+    /// 关闭存储设备
+    close: func() -> result<unit, Error>
+
+    // 组合能力模块
+    power_saving: power_saving
+    secure_element: secure_element
+    diagnostics: diagnostics
+    firmware_update: firmware_update
+}
+
+/// 存储能力接口
 interface storage {
-  // 初始化存储设备
-  init: func() -> result<unit, Error>
-  // 获取存储容量
-  get_capacity: func() -> result<u64, Error>
-  // 读取数据
-  read: func(offset: offset, size: size) -> result<buffer, Error>
-  // 写入数据
-  write: func(offset: offset, data: buffer) -> result<unit, Error>
-  // 擦除数据
-  erase: func(offset: offset, size: size) -> result<unit, Error>
-  // 同步数据到物理存储
-  sync: func() -> result<unit, Error>
-  // 关闭存储设备
-  deinit: func() -> result<unit, Error>
+    /// 打开存储设备
+    /// @param device_path 设备路径或标识符
+    /// @return 存储设备句柄
+    open: func(device_path: string) -> result<storage_device, Error>
+    
+    /// 分配缓冲区
+    /// @param size 缓冲区大小
+    /// @return 缓冲区句柄
+    alloc_buffer: func(size: u64) -> result<u64, Error>
+    
+    /// 释放缓冲区
+    /// @param buffer_id 缓冲区句柄
+    free_buffer: func(buffer_id: u64) -> result<unit, Error>
+    
+    /// 等待操作完成
+    /// @param task_id 任务句柄
+    wait_task: func(task_id: u64) -> result<unit, Error>
+
+    /// 枚举所有可用的存储设备
+    enumerate_devices: func() -> result<list<string>, Error>
 }
 
 // 存储设备世界

@@ -1,26 +1,62 @@
 // 显示硬件接口
 
-use base.types.{result, buffer, color}
+use base.types.{result, option}
 use base.error.{Error}
+use yiduo:capabilities.{power_saving, diagnostics, firmware_update}
 
-// 显示接口
+package yiduo:unihal;
+
+/// 显示模式信息
+record mode {
+    width: u32,          // 分辨率宽
+    height: u32,         // 分辨率高
+    refresh_rate: u32,   // 刷新率 (Hz)
+    format: pixel_format,// 像素格式 (如 RGB888)
+}
+
+/// 像素格式枚举
+enum pixel_format {
+    Rgb888,
+    Rgba8888,
+}
+
+/// 显示设备信息
+record display_info {
+    vendor_id: u32,
+    device_id: u32,
+    model: string,
+    max_resolution: mode,
+}
+
+/// 显示设备资源
+resource display_device {
+    /// 获取当前显示器支持的显示模式列表
+    get_modes: func() -> result<list<mode>, Error>
+
+    /// 设置当前的显示模式 (如切换分辨率)
+    set_mode: func(mode: mode) -> result<unit, Error>
+
+    /// 核心能力：将帧缓冲区 (Framebuffer) 提交到显示器
+    /// @param buffer_id 帧缓冲区的唯一标识，由内存管理接口分配
+    /// @param fence 可选的同步信号，用于GPU渲染完成后通知
+    present: func(buffer_id: u64, fence: option<u64>) -> result<unit, Error>
+
+    /// 获取设备信息
+    get_info: func() -> result<display_info, Error>
+
+    /// 关闭显示设备
+    close: func() -> result<unit, Error>
+
+    // 组合能力模块
+    power_saving: power_saving
+    diagnostics: diagnostics
+    firmware_update: firmware_update
+}
+
+/// 显示能力接口
 interface display {
-  // 初始化显示设备
-  init: func() -> result<unit, Error>
-  // 获取显示分辨率
-  get_resolution: func() -> result<{width: u32, height: u32}, Error>
-  // 刷新屏幕
-  refresh: func(buffer: buffer) -> result<unit, Error>
-  // 设置背景色
-  set_background: func(color: color) -> result<unit, Error>
-  // 绘制像素
-  draw_pixel: func(x: u32, y: u32, color: color) -> result<unit, Error>
-  // 绘制矩形
-  draw_rect: func(x: u32, y: u32, width: u32, height: u32, color: color) -> result<unit, Error>
-  // 清除屏幕
-  clear: func() -> result<unit, Error>
-  // 关闭显示设备
-  deinit: func() -> result<unit, Error>
+    /// 打开显示设备
+    open: func() -> result<display_device, Error>
 }
 
 // 显示设备世界

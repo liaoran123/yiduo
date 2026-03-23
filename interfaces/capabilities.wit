@@ -1,0 +1,42 @@
+// 独立的能力模块定义
+
+use base.types.{result, list, borrow}
+use base.error.{Error}
+
+package yiduo:capabilities;
+
+/// 一个独立的"节能"能力模块
+interface power_saving {
+    /// 设置低功耗模式
+    set_low_power_mode: func(enabled: bool) -> result<unit, Error>;
+    /// 获取功耗
+    get_power_consumption: func() -> result<u32, Error>;
+}
+
+/// 一个独立的"安全加密"能力模块
+interface secure_element {
+    /// 生成密钥
+    generate_key: func() -> result<u64, Error>;
+    /// 签名数据
+    sign_data: func(key_handle: u64, data: list<u8>) -> result<list<u8>, Error>;
+    /// 验证签名
+    verify_signature: func(key_handle: u64, data: list<u8>, signature: list<u8>) -> result<bool, Error>;
+}
+
+/// 一个独立的"诊断"能力模块
+interface diagnostics {
+    /// 获取温度
+    get_temperature: func() -> result<f32, Error>;
+    /// 获取健康状态
+    get_health_status: func() -> result<string, Error>;
+    /// 运行自测试
+    run_self_test: func() -> result<bool, Error>;
+}
+
+/// 一个独立的"固件更新"能力模块
+interface firmware_update {
+    /// 检查固件版本
+    check_version: func() -> result<string, Error>;
+    /// 更新固件
+    update: func(firmware: list<u8>) -> result<unit, Error>;
+}

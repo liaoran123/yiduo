@@ -1,14 +1,73 @@
-// 可读写的流
-resource stream {
-  // 打开一个流（传入设备路径或ID）
-  static open(device_id: string) -> result<stream, Error>
-  
-  // 读取数据
-  read(len: u32) -> result<list<u8>, Error>
-  
-  // 写入数据
-  write(data: list<u8>) -> result<unit, Error>
-  
-  // 刷新缓冲区
-  flush() -> result<unit, Error>
+// 流媒体接口
+
+use base.types.{result, option, list, borrow}
+use base.error.{Error}
+use yiduo:capabilities.{power_saving, diagnostics, firmware_update}
+
+package yiduo:unihal;
+
+/// 流的配置参数
+record config {
+    format: stream_format,
+    buffer_count: u32, // 缓冲区数量，用于双缓冲/三缓冲
+}
+
+/// 流的数据格式
+variant stream_format {
+    Video(u32), // 例如: MJPEG, NV12 (用u32代表FourCC码)
+    Audio(u32), // 例如: PCM, Float32
+    Raw,
+}
+
+/// 流设备信息
+record stream_device_info {
+    vendor_id: u32,
+    device_id: u32,
+    model: string,
+    supported_formats: list<stream_format>,
+}
+
+/// 数据流句柄
+resource stream_handle {
+    /// 从流中获取下一个数据块
+    /// 返回 buffer_id，应用可通过内存接口读取数据
+    dequeue: func() -> result<u64, Error>
+
+    /// 数据处理完毕，归还缓冲区给驱动，实现循环使用
+    enqueue: func(buffer_id: u64) -> result<unit, Error>
+
+    /// 获取设备信息
+    get_info: func() -> result<stream_device_info, Error>
+
+    /// 关闭流
+    close: func() -> result<unit, Error>
+
+    // 组合能力模块
+    power_saving: power_saving
+    diagnostics: diagnostics
+    firmware_update: firmware_update
+}
+
+/// 数据流能力接口
+interface stream {
+    /// 打开一个数据流 (如摄像头)
+    /// @param config 流的配置
+    open: func(config: config) -> result<stream_handle, Error>
+
+    /// 分配缓冲区
+    /// @param size 缓冲区大小
+    /// @return 缓冲区句柄
+    alloc_buffer: func(size: u64) -> result<u64, Error>
+
+    /// 释放缓冲区
+    /// @param buffer_id 缓冲区句柄
+    free_buffer: func(buffer_id: u64) -> result<unit, Error>
+
+    /// 枚举所有可用的流设备
+    enumerate_devices: func() -> result<list<string>, Error>
+}
+
+// 流媒体世界
+world stream {
+  import stream
 }

@@ -1,52 +1,67 @@
-// 传感器硬件接口
-
-use base.types.{result, buffer}
-use base.error.{Error}
-
-// 传感器数据
-type sensor_data = {
-  timestamp: u64,
-  values: list<f32>,
-}
-
-// 摄像头帧
-type camera_frame = {
-  width: u32,
-  height: u32,
-  format: string,
-  data: buffer,
-}
-
 // 传感器接口
+
+use base.types.{result, list}
+use base.error.{Error}
+use yiduo:capabilities.{power_saving, secure_element, diagnostics, firmware_update}
+
+package yiduo:unihal;
+
+/// 传感器类型
+enum sensor_type {
+    Accelerometer,
+    Gyroscope,
+    Temperature,
+    AmbientLight,
+}
+
+/// 传感器数据
+/// 使用 variant 可以优雅地承载不同类型的数据
+variant sensor_data {
+    Vector3(f32, f32, f32), // 用于加速度计、陀螺仪 (x, y, z)
+    Scalar(f32),            // 用于温度、光照
+    Raw(list<u8>),           // 用于特殊传感器
+}
+
+/// 传感器信息
+record sensor_info {
+    sensor_type: sensor_type,
+    vendor_id: u32,
+    device_id: u32,
+    model: string,
+}
+
+/// 传感器资源
+resource sensor_device {
+    /// 读取一次传感器数据
+    read: func() -> result<sensor_data, Error>
+
+    /// 设置传感器的采样间隔 (微秒)
+    /// 对于需要持续上报的传感器，这非常关键
+    set_interval: func(interval_us: u64) -> result<unit, Error>
+
+    /// 获取设备信息
+    get_info: func() -> result<sensor_info, Error>
+
+    /// 关闭传感器
+    close: func() -> result<unit, Error>
+
+    // 组合能力模块
+    power_saving: power_saving
+    secure_element: secure_element
+    diagnostics: diagnostics
+    firmware_update: firmware_update
+}
+
+/// 传感器能力接口
 interface sensor {
-  // 初始化传感器
-  init: func() -> result<unit, Error>
-  // 读取传感器数据
-  read_data: func() -> result<sensor_data, Error>
-  // 获取传感器信息
-  get_info: func() -> result<{name: string, type: string, range: {min: f32, max: f32}}, Error>
-  // 设置传感器参数
-  set_param: func(name: string, value: f32) -> result<unit, Error>
-  // 关闭传感器
-  deinit: func() -> result<unit, Error>
+    /// 打开传感器
+    open: func(sensor_type: sensor_type) -> result<sensor_device, Error>
+
+    /// 枚举所有可用的传感器
+    enumerate_sensors: func() -> result<list<sensor_type>, Error>
 }
 
-// 摄像头接口
-interface camera {
-  // 初始化摄像头
-  init: func() -> result<unit, Error>
-  // 捕获帧
-  capture: func() -> result<camera_frame, Error>
-  // 获取摄像头信息
-  get_info: func() -> result<{name: string, resolution: {width: u32, height: u32}, formats: list<string>}, Error>
-  // 设置摄像头参数
-  set_param: func(name: string, value: string) -> result<unit, Error>
-  // 关闭摄像头
-  deinit: func() -> result<unit, Error>
-}
-
-// 传感器设备世界
+// 传感器世界
 world sensor {
   import sensor
-  import camera
 }

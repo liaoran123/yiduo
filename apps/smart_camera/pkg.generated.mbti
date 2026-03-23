@@ -1,0 +1,14 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/yiduo/apps/smart_camera"
+
+// Values
+
+// Errors
+
+// Types and methods
+type MySmartCamera
+
+// Type aliases
+
+// Traits
+

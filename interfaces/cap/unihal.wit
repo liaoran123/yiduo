@@ -1,20 +1,26 @@
 // UniHAL 统一硬件抽象层总纲
 
-use base.types.{result}
+use base.types.{result, option, list, borrow}
 use base.error.{Error}
+use yiduo:capabilities.{power_saving, secure_element, diagnostics, firmware_update}
+
+package yiduo:unihal;
 
 // 导入所有硬件能力接口
-use cap.display.{display}
-use cap.storage.{storage}
-use cap.input.{input}
-use cap.sensor.{sensor, camera}
-use cap.stream.{stream}
+use cap.display.{display, display_device, mode, pixel_format, display_info}
+use cap.storage.{storage, storage_device, device_info, device_property, storage_region, storage_command}
+use cap.input.{input, input_device, input_device_info, input_property, input_event}
+use cap.sensor.{sensor, sensor_device, sensor_type, sensor_data, sensor_info}
+use cap.stream.{stream, stream_handle, config, stream_format, stream_device_info}
 
 // UniHAL 主世界定义
 world unihal {
   // 导入基础类型
   import base.types
   import base.error
+  
+  // 导入能力模块
+  import yiduo:capabilities
   
   // 导入硬件能力接口
   import cap.display
@@ -28,6 +34,5 @@ world unihal {
   export storage: storage
   export input: input
   export sensor: sensor
-  export camera: camera
   export stream: stream
 }
