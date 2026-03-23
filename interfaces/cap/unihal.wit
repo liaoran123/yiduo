@@ -12,6 +12,7 @@ use cap.storage.{storage, storage_device, device_info, device_property, storage_
 use cap.input.{input, input_device, input_device_info, input_property, input_event}
 use cap.sensor.{sensor, sensor_device, sensor_type, sensor_data, sensor_info}
 use cap.stream.{stream, stream_handle, config, stream_format, stream_device_info}
+use cap.camera.{camera, camera_device, camera_params, camera_info, image}
 
 // UniHAL 主世界定义
 world unihal {
@@ -28,6 +29,7 @@ world unihal {
   import cap.input
   import cap.sensor
   import cap.stream
+  import cap.camera
   
   // 导出核心接口
   export display: display
@@ -35,4 +37,5 @@ world unihal {
   export input: input
   export sensor: sensor
   export stream: stream
+  export camera: camera
 }
