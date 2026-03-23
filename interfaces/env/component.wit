@@ -1,0 +1,45 @@
+// 组件间通信标准
+
+use base.types.{result}
+use base.error.{Error}
+
+// 组件管理接口
+interface component {
+  // 加载组件
+  load: func(path: string) -> result<u32, Error>
+  // 卸载组件
+  unload: func(id: u32) -> result<unit, Error>
+  // 调用组件方法
+  call: func(id: u32, method: string, args: list<u8>) -> result<list<u8>, Error>
+  // 获取组件信息
+  get_info: func(id: u32) -> result<{name: string, version: string}, Error>
+}
+
+// AI 服务接口
+interface ai_service {
+  // 文本生成
+  generate_text: func(prompt: string) -> result<string, Error>
+  // 图像处理
+  process_image: func(image: list<u8>) -> result<list<u8>, Error>
+  // 语音识别
+  recognize_speech: func(audio: list<u8>) -> result<string, Error>
+}
+
+// UI 接口
+interface ui {
+  // 创建窗口
+  create_window: func(title: string, width: u32, height: u32) -> result<u32, Error>
+  // 显示窗口
+  show_window: func(window: u32) -> result<unit, Error>
+  // 绘制文本
+  draw_text: func(window: u32, text: string, x: u32, y: u32) -> result<unit, Error>
+  // 处理事件
+  process_events: func() -> result<list<{type: string, data: list<u8>}>, Error>
+}
+
+// 组件服务世界
+world component {
+  import component
+  import ai_service
+  import ui
+}

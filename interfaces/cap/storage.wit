@@ -1,0 +1,27 @@
+// 存储硬件接口
+
+use base.types.{result, buffer, size, offset}
+use base.error.{Error}
+
+// 存储接口
+interface storage {
+  // 初始化存储设备
+  init: func() -> result<unit, Error>
+  // 获取存储容量
+  get_capacity: func() -> result<u64, Error>
+  // 读取数据
+  read: func(offset: offset, size: size) -> result<buffer, Error>
+  // 写入数据
+  write: func(offset: offset, data: buffer) -> result<unit, Error>
+  // 擦除数据
+  erase: func(offset: offset, size: size) -> result<unit, Error>
+  // 同步数据到物理存储
+  sync: func() -> result<unit, Error>
+  // 关闭存储设备
+  deinit: func() -> result<unit, Error>
+}
+
+// 存储设备世界
+world storage {
+  import storage
+}

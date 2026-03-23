@@ -1,0 +1,37 @@
+// 系统服务接口
+
+use base.types.{result}
+use base.error.{Error}
+
+// 时间接口
+interface time {
+  // 获取当前时间戳（毫秒）
+  current_time: func() -> result<u64, Error>
+  // 休眠指定毫秒数
+  sleep: func(ms: u32) -> result<unit, Error>
+}
+
+// 随机数接口
+interface random {
+  // 生成指定范围的随机数
+  rand: func(min: u32, max: u32) -> result<u32, Error>
+  // 生成随机字节
+  rand_bytes: func(size: u32) -> result<list<u8>, Error>
+}
+
+// 系统信息接口
+interface system {
+  // 获取系统版本
+  get_version: func() -> result<string, Error>
+  // 获取系统架构
+  get_architecture: func() -> result<string, Error>
+  // 获取系统内存信息
+  get_memory_info: func() -> result<{total: u64, used: u64}, Error>
+}
+
+// 操作系统核心接口
+world os {
+  import time
+  import random
+  import system
+}

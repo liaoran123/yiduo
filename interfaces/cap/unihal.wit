@@ -1,0 +1,33 @@
+// UniHAL 统一硬件抽象层总纲
+
+use base.types.{result}
+use base.error.{Error}
+
+// 导入所有硬件能力接口
+use cap.display.{display}
+use cap.storage.{storage}
+use cap.input.{input}
+use cap.sensor.{sensor, camera}
+use cap.stream.{stream}
+
+// UniHAL 主世界定义
+world unihal {
+  // 导入基础类型
+  import base.types
+  import base.error
+  
+  // 导入硬件能力接口
+  import cap.display
+  import cap.storage
+  import cap.input
+  import cap.sensor
+  import cap.stream
+  
+  // 导出核心接口
+  export display: display
+  export storage: storage
+  export input: input
+  export sensor: sensor
+  export camera: camera
+  export stream: stream
+}

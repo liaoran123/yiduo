@@ -8,6 +8,8 @@ package "username/yiduo/kernel/security"
 // Types and methods
 type PermissionLevel
 
+type SecurityContext
+
 type SecurityDomain
 
 // Type aliases

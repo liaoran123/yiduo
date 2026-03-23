@@ -1,26 +1,22 @@
 {
   "architecture": "riscv64",
-  "target": "riscv64-unknown-none-elf",
-  "features": [
-    "rv64imafd",
-    "c"
-  ],
   "memory": {
-    "base_address": "0x80000000",
-    "size": "0x40000000"
+    "physical_start": 0x80000000,
+    "kernel_size": 0x1000000,
+    "heap_start": 0x81000000,
+    "heap_size": 0x2000000
+  },
+  "boot": {
+    "entry_point": 0x80000000,
+    "stack_size": 0x10000
   },
   "devices": {
     "uart": {
-      "base_address": "0x10000000",
+      "base_address": 0x10000000,
       "baud_rate": 115200
     },
     "timer": {
-      "base_address": "0x10001000",
-      "frequency": 1000000
+      "base_address": 0x10008000
     }
-  },
-  "kernel": {
-    "entry_point": "0x80000000",
-    "stack_size": "0x10000"
   }
 }

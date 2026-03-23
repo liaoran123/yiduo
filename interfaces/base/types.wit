@@ -1,0 +1,30 @@
+// 基础数据类型定义
+
+// 数据缓冲区
+type buffer = list<u8>
+
+// 文件路径
+type path = string
+
+// 颜色定义
+type color = {
+  r: u8,
+  g: u8,
+  b: u8,
+  a: u8,
+}
+
+// 时间戳
+type timestamp = u64
+
+// 大小
+type size = u32
+
+// 偏移量
+type offset = u32
+
+// 结果类型
+type result<T, E> = {
+  ok: T,
+  err: E,
+}

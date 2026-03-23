@@ -1,0 +1,53 @@
+// 网络服务接口
+
+use base.types.{result}
+use base.error.{Error}
+
+// TCP 接口
+interface tcp {
+  // 创建 TCP 套接字
+  create_socket: func() -> result<u32, Error>
+  // 绑定端口
+  bind: func(socket: u32, port: u16) -> result<unit, Error>
+  // 监听连接
+  listen: func(socket: u32, backlog: u32) -> result<unit, Error>
+  // 接受连接
+  accept: func(socket: u32) -> result<u32, Error>
+  // 连接到服务器
+  connect: func(socket: u32, host: string, port: u16) -> result<unit, Error>
+  // 发送数据
+  send: func(socket: u32, data: list<u8>) -> result<u32, Error>
+  // 接收数据
+  recv: func(socket: u32, size: u32) -> result<list<u8>, Error>
+  // 关闭套接字
+  close: func(socket: u32) -> result<unit, Error>
+}
+
+// UDP 接口
+interface udp {
+  // 创建 UDP 套接字
+  create_socket: func() -> result<u32, Error>
+  // 绑定端口
+  bind: func(socket: u32, port: u16) -> result<unit, Error>
+  // 发送数据
+  send_to: func(socket: u32, data: list<u8>, host: string, port: u16) -> result<u32, Error>
+  // 接收数据
+  recv_from: func(socket: u32, size: u32) -> result<{data: list<u8>, host: string, port: u16}, Error>
+  // 关闭套接字
+  close: func(socket: u32) -> result<unit, Error>
+}
+
+// HTTP 接口
+interface http {
+  // 发送 GET 请求
+  get: func(url: string) -> result<{status: u16, body: list<u8>}, Error>
+  // 发送 POST 请求
+  post: func(url: string, body: list<u8>) -> result<{status: u16, body: list<u8>}, Error>
+}
+
+// 网络服务世界
+world net {
+  import tcp
+  import udp
+  import http
+}

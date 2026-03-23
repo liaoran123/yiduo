@@ -217,107 +217,167 @@
 
 ```
 yiduo/
-├── .githooks/            # Git 钩子
-├── .github/              # GitHub 配置
-│   └── workflows/        # CI/CD 工作流
-├── .vscode/              # VS Code 配置
-├── apps/                 # 应用组件
-│   ├── ai_shell/         # AI 终端应用
-│   ├── hello/            # Hello World 组件
-│   └── unihal_demo/      # UniHAL 演示组件
+├── .githooks/            # Git 钩子 (自动检查/格式化)
+├── .github/              # GitHub 配置 (CI/CD)
+├── .vscode/              # 编辑器配置
+├── configs/              # 【架构配置】ARM64/RISC-V 内存布局等
+│   ├── arm64.json
+│   └── riscv64.json
+├── sdk/                  # 【开发工具包】MoonBit 深度优化
+│   ├── std/               # 标准库扩展
+│   │   ├── hal/           # 硬件抽象层 SDK (对应 interfaces/cap)
+│   │   └── sys/           # 系统服务 SDK (对应 interfaces/env)
+│   ├── cli/               # 命令行工具
+│   │   └── yiduo-build/   # 构建与打包工具
+│   └── tools/             # 辅助工具
+│       └── wit-gen/       # 从 WIT 生成 MoonBit 代码的工具
+├── interfaces/           # 【宪法层】WIT 接口定义
+│   ├── base/             # 基础类型 (Error, Buffer)
+│   ├── env/              # 软件环境 (OS, FS, Net)
+│   └── cap/              # 硬件能力 (Display, Stream, Sensor)
+├── kernel/               # 【底座层】Native 核心
+│   ├── boot/             # 启动引导
+│   ├── mm/               # 内存管理 (物理/虚拟)
+│   ├── drivers/          # 核心驱动 (Native)
+│   └── impl/             # 接口实现 (WIT -> Native 胶水)
+├── runtime/              # 【适配层】Wasm 运行时
+│   ├── wasm/             # 引擎封装
+│   └── adapter/          # 硬件适配器 (Wasm)
+├── services/             # 【服务层】系统服务 (Wasm)
+│   ├── audio/            # 音频服务
+│   ├── filesystem/       # 文件系统
+│   └── network/          # 网络协议栈
+├── apps/                 # 【应用层】用户应用 (Wasm)
+│   ├── ai_shell/         # AI 终端
+│   └── hello/            # Hello World
+├── tests/                # 【验证层】测试套件
+│   ├── unit/             # 单元测试
+│   └── integration/      # 集成测试
 ├── build/                # 构建脚本
-│   ├── build.sh          # 主构建脚本
-│   └── test.sh           # 测试脚本
-├── cmd/                  # 命令行工具
-│   └── main/             # 主命令行入口
 ├── docs/                 # 文档
-│   ├── architecture.md   # 架构设计
-│   └── usage.md          # 使用说明
-├── interfaces/           # 接口定义（WIT）
-│   ├── base.wit          # 基础接口
-│   ├── memory.wit        # 内存接口
-│   ├── os.wit            # 操作系统接口
-│   ├── stream.wit        # 流接口
-│   └── unihal.wit        # 主接口
-├── kernel/               # 基础底座层
-│   ├── boot/             # 启动代码
-│   ├── drivers/          # 驱动组件
-│   ├── interface/        # 接口实现
-│   ├── mm/               # 内存管理
-│   ├── kernel.mbt        # 内核主文件
-│   └── moon.pkg          # 内核包配置
-├── runtime/              # 运行时与服务组件
-│   ├── adapter/          # 适配器组件
-│   │   ├── compute/      # 计算适配器
-│   │   ├── stream/       # 流适配器
-│   │   └── adapter_manager.mbt   # 适配器管理器
-│   └── wasm/             # Wasm 运行时
-├── services/             # 系统服务
-│   └── network/          # 网络服务
-├── .gitignore            # Git 忽略文件
-├── AGENTS.md             # 项目代理配置
-├── LICENSE               # 许可证文件
-├── README.md             # 项目说明
-├── build.sh              # 根目录构建脚本
-├── moon.mod.json         # 根模块配置
-├── moon.pkg              # 根包配置
-├── yiduo.mbt             # 主文件
-├── yiduo_test.mbt        # 测试文件
-└── yiduo_wbtest.mbt      # 白盒测试文件
+├── cmd/                  # 命令行工具
+├── .gitignore
+├── LICENSE
+├── README.md
+├── moon.mod.json
+├── build.sh
+└── yiduo.mbt
 ```
 
 ### 接口定义（interfaces/）
 
 interfaces/ 目录包含了一多操作系统的核心接口定义，使用 WIT（WebAssembly Interface Types）格式编写。这些接口定义是系统的"宪法"，规定了组件间通信的标准规范。
 
-#### 作用
-- **标准化通信**：定义了组件间通信的标准接口，确保不同组件、不同语言之间的互操作性
-- **能力管理**：通过接口定义，实现了"硬件操作权"向"API 调用权"的转变，操作系统不再管理硬件，而是管理"能力"
-- **安全隔离**：应用只能通过接口调用系统能力，越界操作会被自动拦截
+#### 接口包结构
 
-#### 主要接口文件
-- **base.wit**：定义了基础的错误类型、返回结果类型以及核心接口（如 Log、Time 等）
-- **memory.wit**：定义了内存管理相关的接口
-- **stream.wit**：定义了流处理相关的接口
-- **unihal.wit**：定义了统一硬件抽象层的主接口
+按照功能和职责，接口定义被划分为三个核心包：
 
-### unihal.wit：硬件世界的"宪法"
+##### 📦 基础包（interfaces/base/）
+- **定位**：世界的通用语
+- **内容**：数据类型定义，如 buffer、path、color、error 等
+- **作用**：为所有其他接口提供基础数据类型，是系统的基石
+- **主要文件**：
+  - `types.wit`：定义通用数据类型
+  - `error.wit`：定义错误处理标准
 
-unihal.wit 是整个系统的硬件接口文件，它绝不仅仅是代码，它是硬件世界的"宪法"，是连接"软件文明"与"硬件荒原"的唯一桥梁。
+##### 🌍 环境包（interfaces/env/）
+- **定位**：操作系统的"地盘"
+- **内容**：软件交互接口，包括系统服务和组件服务
+- **作用**：定义应用与系统、应用与应用之间的通信标准
+- **主要文件**：
+  - `os.wit`：系统服务（时间、随机数、系统信息）
+  - `fs.wit`：文件服务（读写、目录操作）
+  - `net.wit`：网络服务（TCP/UDP/HTTP）
+  - `component.wit`：组件服务（组件管理、AI 服务、UI）
 
-它里面藏着三个核心维度的定义：
+##### ⚡ 能力包（interfaces/cap/）
+- **定位**：硬件的"抽象层"
+- **内容**：硬件抽象接口，定义硬件设备的能力
+- **作用**：将物理硬件能力抽象为标准接口，是 UniHAL 的核心
+- **主要文件**：
+  - `stream.wit`：定义纯数据流（读/写字节流），是连接硬件和软件的通用管道
+  - `display.wit`：显示设备接口
+  - `storage.wit`：存储设备接口
+  - `input.wit`：输入设备接口
+  - `sensor.wit`：传感器接口
+  - `unihal.wit`：总纲，引用所有硬件能力接口，对外暴露统一入口
 
-#### 📜 它是"能力的定义书"
-它不描述硬件"长什么样"（那是寄存器的事），它只描述硬件"能干什么"。
+#### 设计理念
 
-在 unihal.wit 里，你不会看到 0x1234 这种寄存器地址，你只会看到像这样的"人话"（伪代码）：
+- **职责清晰**：写驱动的去 cap/ 里找活干，写应用的去 env/ 里找服务，写编译器的去 base/ 里看类型
+- **依赖关系顺畅**：cap/ 和 env/ 都依赖 base/，env/ 和 cap/ 互不干扰
+- **符合"一多"哲学**：基础包是"一"（统一的数据标准），环境包是"多"（丰富的软件生态），能力包是"实"（落地的硬件能力）
+
+#### 接口使用示例
+
+在 Wasm 组件中使用接口：
+
+```moonbit
+/// @component "env:os" "time"
+fn current_time() -> Result[UInt64, Error]
+
+fn main {
+  let time = current_time()
+  match time {
+    Ok(t) => println("Current time: " + t.to_string()),
+    Err(e) => println("Error: " + e.to_string())
+  }
+}
+```
+
+在 Native 组件中实现接口：
+
+```moonbit
+// 实现 current_time 函数
+fn current_time_impl() -> UInt64 {
+  // 实现时间获取逻辑
+  1234567890
+}
+
+// 注册接口
+fn register_os_interface() -> Unit {
+  wasm::register_function("current_time", current_time_impl)
+}
+```
+
+### UniHAL：硬件世界的"宪法"
+
+UniHAL（统一硬件抽象层）是一多操作系统的核心，它将硬件世界的复杂性抽象为标准接口，是连接"软件文明"与"硬件荒原"的唯一桥梁。
+
+#### 📜 能力的定义书
+
+UniHAL 不描述硬件"长什么样"（那是寄存器的事），它只描述硬件"能干什么"。在 cap/ 目录下的接口文件中，你不会看到 0x1234 这种寄存器地址，你只会看到像这样的"人话"：
 
 ```
-// unihal.wit 的核心逻辑
+// display.wit 的核心逻辑
 
 interface display {
     // 不问你是 HDMI 还是 MIPI，我只要求你能"刷新屏幕"
-    refresh: func(buffer: buffer) -> result;
+    refresh: func(buffer: buffer) -> result<unit, Error>;
 }
+
+// sensor.wit 的核心逻辑
 
 interface sensor {
     // 不问你是 I2C 还是 SPI，我只要求你能"读取数据"
-    read-data: func() -> list;
+    read_data: func() -> result<sensor_data, Error>;
 }
 ```
 
 **实质**：它把物理世界的复杂性，抽象成了软件世界的功能契约。
 
-#### 🛡️ 它是"权限的边界线"
-正如我们之前聊的"沙箱即权限"，这个文件就是那道墙。
-- **墙内（Wasm 应用）**：应用只能看到 unihal.wit 里定义的这些函数。它想干别的？门都没有，编译器直接报错。
+#### 🛡️ 权限的边界线
+
+正如我们之前聊的"沙箱即权限"，这些接口文件就是那道墙。
+- **墙内（Wasm 应用）**：应用只能看到 cap/ 目录里定义的这些函数。它想干别的？门都没有，编译器直接报错。
 - **墙外（Native 驱动）**：驱动程序必须实现这些函数。如果实现不了，或者私自加了隐藏功能，那就是"违宪"。
 
 **实质**：它规定了软件"被允许"对硬件做什么。
 
-#### 🔌 它是"适配的模具"
-对于硬件厂商来说，这个文件就是"模具"。
-- 厂商拿到这个文件，就像拿到了插座的标准图纸。
+#### 🔌 适配的模具
+
+对于硬件厂商来说，这些接口文件就是"模具"。
+- 厂商拿到这些文件，就像拿到了插座的标准图纸。
 - 他们要做的，就是写一个 Native 组件（适配器），把自己的硬件塞进这个模具里。
 - 只要严丝合缝（符合 WIT 定义），插上就能用。
 
@@ -325,12 +385,12 @@ interface sensor {
 
 #### 📌 总结
 
-当你打开 interfaces/unihal.wit 时，你看到的不是枯燥的代码，你看到的是：
+当你打开 interfaces/cap/ 目录时，你看到的不是枯燥的代码，你看到的是：
 - 整个系统的硬件能力清单
 - 所有驱动开发的考试大纲
 - 软件与硬件对话的通用字典
 
-这就是"一多"的命门所在。这个文件定得好，万马奔腾；定得不好，寸步难行。
+这就是"一多"的命门所在。这些接口文件定得好，万马奔腾；定得不好，寸步难行。
 
 #### 接口使用示例
 
@@ -539,9 +599,33 @@ echo "构建完成！"
 
 ## 未来路线图
 
-- **Phase 1 (原型)**：完成 MoonBit Native 内核与 Wasm 服务的通信。
-- **Phase 2 (硬件支持)**：实现 UniHAL，支持 x86_64 和 ARM64 架构。
-- **Phase 3 (AI 原生)**：集成 AI 驱动调度，实现自然语言操作系统交互。
+### Phase 1 (原型阶段) - 2026 Q2
+- ✅ 完成 MoonBit Native 内核与 Wasm 服务的通信
+- ✅ 实现基础安全模型和权限管理
+- ✅ 开发文件系统、安全和音频服务
+- ✅ 编写跨平台构建脚本（PowerShell 和 Bash）
+- ✅ 完成核心接口定义和文档
+
+### Phase 2 (硬件支持阶段) - 2026 Q3-Q4
+- 实现 UniHAL 核心功能，支持 x86_64 和 ARM64 架构
+- 开发硬件适配器框架，支持常见硬件设备
+- 实现 AI 自动适配器生成系统
+- 完成内核模块的硬件抽象层实现
+- 进行硬件兼容性测试
+
+### Phase 3 (AI 原生阶段) - 2027 Q1-Q2
+- 集成 AI 驱动调度系统
+- 实现自然语言操作系统交互
+- 开发 AI 辅助的系统管理工具
+- 构建组件市场和生态系统
+- 发布首个稳定版本
+
+### Phase 4 (生态扩展阶段) - 2027 Q3-Q4
+- 支持更多编程语言和开发框架
+- 扩展硬件设备支持范围
+- 开发行业特定的解决方案
+- 建立开发者社区和贡献体系
+- 推出企业级支持服务
 
 ## 许可证
 

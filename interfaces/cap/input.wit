@@ -1,0 +1,40 @@
+// 输入硬件接口
+
+use base.types.{result}
+use base.error.{Error}
+
+// 键盘事件
+enum KeyEvent {
+  Press(string),
+  Release(string),
+  Repeat(string),
+}
+
+// 鼠标事件
+enum MouseEvent {
+  Move(u32, u32),
+  Press(u32, u32, u32),
+  Release(u32, u32, u32),
+  Scroll(i32),
+}
+
+// 输入接口
+interface input {
+  // 初始化输入设备
+  init: func() -> result<unit, Error>
+  // 获取键盘事件
+  get_key_events: func() -> result<list<KeyEvent>, Error>
+  // 获取鼠标事件
+  get_mouse_events: func() -> result<list<MouseEvent>, Error>
+  // 检查按键状态
+  is_key_pressed: func(key: string) -> result<bool, Error>
+  // 获取鼠标位置
+  get_mouse_position: func() -> result<{x: u32, y: u32}, Error>
+  // 关闭输入设备
+  deinit: func() -> result<unit, Error>
+}
+
+// 输入设备世界
+world input {
+  import input
+}

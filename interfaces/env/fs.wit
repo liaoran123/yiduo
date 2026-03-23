@@ -1,0 +1,27 @@
+// 文件服务接口
+
+use base.types.{result, path}
+use base.error.{Error}
+
+// 文件系统接口
+interface filesystem {
+  // 读取文件内容
+  read: func(path: path) -> result<list<u8>, Error>
+  // 写入文件内容
+  write: func(path: path, content: list<u8>) -> result<unit, Error>
+  // 读取目录
+  readdir: func(path: path) -> result<list<string>, Error>
+  // 创建目录
+  mkdir: func(path: path) -> result<unit, Error>
+  // 删除文件或目录
+  remove: func(path: path) -> result<unit, Error>
+  // 检查文件是否存在
+  exists: func(path: path) -> result<bool, Error>
+  // 获取文件信息
+  stat: func(path: path) -> result<{size: u64, is_dir: bool, mtime: u64}, Error>
+}
+
+// 文件系统世界
+world fs {
+  import filesystem
+}
