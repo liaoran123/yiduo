@@ -1,0 +1,16 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/yiduo/kernel/security"
+
+// Values
+
+// Errors
+
+// Types and methods
+type PermissionLevel
+
+type SecurityDomain
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,5 @@
+// security package configuration
+
+options(
+  "is-main": false,
+)
