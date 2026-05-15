@@ -49,7 +49,48 @@
 - **沙箱隔离**：Wasm 沙箱保证了系统的安全性和稳定性，即使在多语言、多硬件的环境下
 - **AI 自动化**：利用 AI 自动生成适配器，让硬件接入像插拔 U 盘一样自然，开发者无需关心底层细节
 
-这种设计理念不仅解决了传统操作系统的"屎山"问题，也为未来的计算平台奠定了基础，实现了"一次编译，到处运行"的愿景。
+#### 🔧 Wasm 增强型入口方案（Wasm-Linker Enhancement）
+
+**核心理念**：既然所有语言都编译成 Wasm，**最直接的切入点是改进"汇聚"后的产物**，而不是修改某种语言。
+
+**1. 核心武器：Link-Time Optimization (LTO) 增强版 Linker**
+- **现有坑**：传统 Wasm Linker 只是简单拼接模块，跨模块调用有大量导入/导出开销
+- **改进方案**：开发"一多"专用 **Static Linker**
+- **黑科技**：在**二进制层面**直接重写指令，将"远程调用"改为"近程跳转"
+- **结果**：跨语言调用的源码，最终跑起来像同一种语言写的一样快
+
+**2. 共享内存堆（Global Shared Heap）方案**
+- **改进点**：传统 Wasm 模块内存是隔离的，我们改进 **Wasm 虚拟机入口逻辑**
+- **实现**：给系统层增加"共享堆"协议，MoonBit/C/Rust 都挂载同一段物理内存
+- **白嫖体验**：MoonBit 对象直接把**内存地址**传给 C 驱动，C 驱动直接原地修改，无需 WIT 转换、无需拷贝
+- **本质**：用硬件级的"共享内存"思维，降维打击软件级的"接口类型转换"思维
+
+**3. 基于插件的"能力注入"（Ambient Authority Injection）**
+- **操作方式**：当通用 C 库（编译为 Wasm）进入系统时
+- **改进方案**：加载器扫描 Wasm 导入表，按需注入能力
+  - 需要 `malloc` → 注入高性能共享内存分配器
+  - 需要打印日志 → 绑定到"一多"日志总线
+- **优势**：无需修改 C 库源码，无需 MoonBit 编译器支持，**运行时完成生态收编**
+
+**4. "双向透明"的组件编译器：Wasm-to-Native JIT**
+- **逻辑**：无论入口是 MoonBit Wasm 还是 Rust Wasm
+- **改进**：合并时 JIT 引擎进行**交叉分析（Cross-module Inlining）**
+- **结果**：MoonBit 逻辑和 C 库逻辑**融合编译**成一段连续的 CPU 指令
+
+**📊 方案对比**：
+
+| 方案 | 开发者工作量 | 系统兼容性 | 性能表现 |
+|-----|------------|----------|---------|
+| 修改语言/分叉 | 极高（需学习新语法） | 低（破坏标准） | 高 |
+| 构建工具封装 | 中（需配置脚本） | 中（依赖工具链） | 中 |
+| **入口/链接器改进** | **零（直接拿来用）** | **极高（标准 Wasm 即可）** | **极高（全局优化）** |
+
+**🚀 结论：最完美的"降维打击"**
+- **MoonBit 负责"编排"**：现代、安全的语法写系统逻辑框架
+- **通用 Wasm 负责"核心"**：现有的 C/Rust/C++ 库直接编成标准 Wasm 扔进去
+- **强化 Linker 负责"白嫖"**：通过**共享内存、二进制重写、跨模块内联**，把不同来源的"废铁"焊接成精密高性能机器
+
+**这种"不改源码、只改汇编、强化链接"的思路，让 MoonBit 成为"指挥官"，而不是需要亲力亲为的"苦力"。**
 
 ## 核心价值
 
@@ -892,6 +933,119 @@ fn main {
   }
 }
 ```
+
+### 3.5 增强型 Linker 层：跨语言涡轮增压器 (Rust)
+
+文件路径：tools/yiduo-linker/
+
+**展示一多 OS 的核心黑科技：用 Rust 打造的增强型 Wasm Linker，实现跨语言零开销调用。**
+
+```rust
+// tools/yiduo-linker/src/parser.rs
+// 第一步：解析 Wasm 二进制
+use anyhow::{Context, Result};
+use wasmparser::{Parser, Payload, TypeRef};
+use std::collections::{HashMap, HashSet};
+
+/// 解析后的 Wasm 模块
+pub struct ParsedModule {
+    pub imports: Vec<ImportInfo>,
+    pub exports: Vec<ExportInfo>,
+    pub types: Vec<FunctionType>,
+    pub raw_bytes: Vec<u8>,
+}
+
+/// 导入函数信息
+pub struct ImportInfo {
+    pub module: String,
+    pub name: String,
+    pub type_idx: u32,
+    pub signature: FunctionType,
+}
+
+/// 导出函数信息
+pub struct ExportInfo {
+    pub name: String,
+    pub kind: ExportKind,
+    pub index: u32,
+}
+
+/// 函数类型
+pub struct FunctionType {
+    pub params: Vec<ValueType>,
+    pub results: Vec<ValueType>,
+}
+
+/// 解析 Wasm 二进制
+pub fn parse_wasm(bytes: &[u8]) -> Result<ParsedModule> {
+    // 详细实现见 操作系统/016.一多 OS Wasm 增强型入口方案.md
+    todo!()
+}
+```
+
+```rust
+// tools/yiduo-linker/src/linker.rs
+// 第三步：增强型 LTO Linker
+use walrus::{Module as WalrusModule};
+
+/// 一多 OS 增强型 Linker
+pub struct YiduoLinker {
+    modules: HashMap<String, ParsedModule>,
+    plan: Option<OptimizationPlan>,
+}
+
+impl YiduoLinker {
+    /// 执行链接和优化
+    pub fn link(&mut self) -> Result<Vec<u8>> {
+        log::info!("Starting enhanced linking with LTO...");
+        
+        // 使用 walrus 进行高级转换
+        let mut merged_module = WalrusModule::parse(&self.modules.values().next().unwrap().raw_bytes)?;
+        
+        // 黑科技核心：跨模块内联和指令重写
+        for call_info in &self.plan.as_ref().unwrap().optimizable_calls {
+            self.apply_lto_optimization(&mut merged_module, call_info)?;
+        }
+        
+        // 生成最终的优化后的 Wasm
+        let final_bytes = merged_module.emit_wasm();
+        log::info!("Linking complete! Output size: {} bytes", final_bytes.len());
+        Ok(final_bytes)
+    }
+}
+```
+
+```toml
+# tools/yiduo-linker/Cargo.toml
+[package]
+name = "yiduo-linker"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasmparser = "0.119"    # 解析 Wasm 字节码
+wasm-encoder = "0.42"  # 生成新的 Wasm 字节码
+walrus = "0.20"         # 高级 Wasm 转换库
+anyhow = "1.0"          # 错误处理
+log = "0.4"            # 日志
+clap = "4.4"           # 命令行解析
+```
+
+```bash
+# 使用示例
+# 编译并安装
+cd tools/yiduo-linker
+cargo install --path .
+
+# 链接多个 Wasm 模块并优化
+yiduo-linker \
+    --input moonbit_core.wasm \
+    --input rust_service.wasm \
+    --output optimized.wasm \
+    --verbose
+```
+
+**详细代码和完整实现：** 参见 [操作系统/016.一多 OS Wasm 增强型入口方案.md](操作系统/016.一多 OS Wasm 增强型入口方案.md)
 
 ## 构建与运行流程
 
