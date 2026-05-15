@@ -647,7 +647,157 @@ fn start_server(port: Int) -> tcp:Socket {
 }
 ```
 
-### 3.3 应用组件层：AI 编排 (Wasm)
+### 3.3 资源组件层：系统注册表 (Native + Wasm)
+
+文件路径：kernel/resource/registry.mbt
+
+**核心实现**：资源也是组件！展示硬件如何自我注册、应用如何按需引用、AI如何调度共享资源。
+
+```moonbit nocheck
+// kernel/resource/registry.mbt
+// 编译目标：混合模式 (Native核心 + Wasm组件)
+
+import yiduo:capabilities
+import yiduo:ai/scheduler
+
+/// 资源状态枚举
+enum ResourceStatus {
+  Idle    // 空闲状态
+  Busy    // 忙碌状态
+  Offline // 离线状态
+}
+
+/// 资源组件类型
+type ResourceComponent = {
+  id: String,
+  name: String,
+  capability: capabilities:Capability,
+  status: ResourceStatus,
+  ref_count: Int
+}
+
+/// 系统注册表：管理所有资源组件
+struct SystemRegistry {
+  mut resources: Map[String, ResourceComponent]
+}
+
+/// 全局注册表实例
+let mut registry: SystemRegistry = { resources: Map::empty() }
+
+/// 第一步：硬件自我注册（万物皆组件）
+/// 硬件启动时，将自己包装成标准的"资源组件"，主动向系统报到
+fn register_resource(component: ResourceComponent) -> Unit {
+  println("资源组件上线: " + component.name + " (" + component.id + ")")
+  registry.resources = registry.resources.insert(component.id, component)
+  
+  // 广播能力，让其他组件知道这个资源可用
+  capabilities:broadcast_available(component.capability)
+}
+
+/// 第二步：应用按需引用（无零和之争）
+/// 应用不需要去"抢"硬件的"所有权"，只需要发起一个"引用"请求
+fn borrow_resource(capability: capabilities:Capability) -> Result[String, String] {
+  // AI 调度器介入，找到最合适的资源
+  match AI_SCHEDULER:find_best_match(registry.resources, capability) {
+    Some(resource_id) => {
+      match registry.resources.get(resource_id) {
+        Some(mut component) => {
+          // 更新状态和引用计数
+          component.status = ResourceStatus::Busy
+          component.ref_count = component.ref_count + 1
+          registry.resources = registry.resources.insert(resource_id, component)
+          
+          println("成功引用资源: " + component.name)
+          Ok(resource_id)
+        },
+        None => Err("资源不存在")
+      }
+    },
+    None => Err("没有匹配的资源，AI正在协调排队...")
+  }
+}
+
+/// 释放资源引用
+fn release_resource(resource_id: String) -> Result[Unit, String] {
+  match registry.resources.get(resource_id) {
+    Some(mut component) => {
+      component.ref_count = component.ref_count - 1
+      if component.ref_count == 0 {
+        component.status = ResourceStatus::Idle
+        println("资源已释放: " + component.name + "，回归共享池")
+      }
+      registry.resources = registry.resources.insert(resource_id, component)
+      Ok(())
+    },
+    None => Err("资源不存在")
+  }
+}
+
+/// 第三步：AI 调度器（执一御万）
+/// AI 替代了传统 OS 里死板的"内核调度器"
+module AI_SCHEDULER {
+  /// 智能资源匹配
+  fn find_best_match(
+    resources: Map[String, ResourceComponent], 
+    required_capability: capabilities:Capability
+  ) -> Option[String] {
+    // 1. 筛选出能力匹配且处于空闲状态的资源
+    let available = resources.values()
+      .filter(r => r.status == ResourceStatus::Idle)
+      .filter(r => capabilities:is_compatible(r.capability, required_capability))
+    
+    // 2. AI 根据历史数据和当前负载，智能选择最优资源
+    match available {
+      [] => None,
+      [first] => Some(first.id),
+      _ => {
+        // 更复杂的AI调度逻辑：考虑负载均衡、性能历史等
+        let selected = available.sort_by(|a, b| a.ref_count < b.ref_count).head()
+        Some(selected.id)
+      }
+    }
+  }
+}
+
+/// 示例：GPU资源组件定义
+fn create_gpu_resource(id: String, name: String) -> ResourceComponent {
+  {
+    id: id,
+    name: name,
+    capability: capabilities:rendering(high_performance=true),
+    status: ResourceStatus::Idle,
+    ref_count: 0
+  }
+}
+
+/// 示例：摄像头资源组件定义
+fn create_camera_resource(id: String, name: String) -> ResourceComponent {
+  {
+    id: id,
+    name: name,
+    capability: capabilities:image_capture(resolution="4k"),
+    status: ResourceStatus::Idle,
+    ref_count: 0
+  }
+}
+
+/// 系统初始化示例
+fn main {
+  println("一多系统：资源管理器启动")
+  
+  // 硬件启动，自我注册
+  let gpu = create_gpu_resource("gpu_001", "高性能GPU")
+  let camera = create_camera_resource("cam_001", "4K摄像头")
+  
+  register_resource(gpu)
+  register_resource(camera)
+  
+  println("【一多操作系统 · 第二铁律】")
+  println("\"万物皆组件，资源无私有。一切皆为引用，唯有共享永生。\"")
+}
+```
+
+### 3.4 应用组件层：AI 编排 (Wasm)
 
 文件路径：apps/ai_shell/shell.mbt
 
@@ -665,6 +815,13 @@ fn npu_infer(model_path: String, input_data: List[Float]) -> List[Float]
 /// @component "wasi:filesystem" "read"
 fn read_file(path: String) -> Result[String, String]
 
+/// 导入资源管理接口 (WIT 绑定)
+/// @component "yiduo:resource" "borrow"
+fn borrow_resource(cap: String) -> Result[String, String]
+
+/// @component "yiduo:resource" "release"
+fn release_resource(id: String) -> Result[Unit, String]
+
 fn main {
   println("一多 AI 终端启动")
   
@@ -674,14 +831,25 @@ fn main {
     Err(e) => println("配置错误: " + e)
   }
 
-  // 2. 调用 NPU 驱动 (Native FFI)
-  // 注意：这里通过组件模型调用，底层由 Native 实现
-  let result = npu_infer(
-    "/models/llm_v3.wasm",
-    [0.1, 0.5, 0.9]
-  )
-  
-  println("AI 推理结果: " + result.to_string())
+  // 2. 按需引用GPU资源 (无零和共享)
+  match borrow_resource("rendering:high_performance") {
+    Ok(gpu_id) => {
+      println("成功获取GPU资源: " + gpu_id)
+      
+      // 3. 调用 NPU 驱动 (Native FFI)
+      // 注意：这里通过组件模型调用，底层由 Native 实现
+      let result = npu_infer(
+        "/models/llm_v3.wasm",
+        [0.1, 0.5, 0.9]
+      )
+      
+      println("AI 推理结果: " + result.to_string())
+      
+      // 4. 用完即走，释放资源
+      release_resource(gpu_id)
+    },
+    Err(e) => println("资源获取失败: " + e)
+  }
 }
 ```
 
