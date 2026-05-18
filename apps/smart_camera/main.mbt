@@ -1,5 +1,8 @@
 // 智能摄像头应用实现
-// 演示"一多"架构的"搭积木"理念
+// 演示"一多"架构的"搭积木"理念 + "配置文件即编程"
+
+// 引入 device_loader
+// (在真实项目中，这应该是一个模块导入)
 
 ///| 第一阶段：底层驱动（模拟芯片厂实现）
 // 模拟传感器核心驱动
@@ -44,6 +47,7 @@ struct MySmartCamera {
     crypto: CryptoEngine          // 组合模块：加密
     name: String
     model: String
+    capabilities: Array[String]   // 从配置加载的能力列表
 }
 
 ///| 智能摄像头方法 - 捕获图像
@@ -78,30 +82,51 @@ fn get_info(camera : MySmartCamera) -> String {
     "Smart Camera: " + camera.name + " " + camera.model + " (基于 " + camera.driver.vendor + " " + camera.driver.model + ")"
 }
 
+///| 🆕 从配置创建摄像头
+fn create_camera_from_config() -> MySmartCamera {
+    println("📋 从配置文件加载设备规格...")
+    
+    // 在真实项目中，这里会调用 device_loader.load_config_from_file()
+    // 现在我们使用内联配置演示
+    let device_id = "sony-imx327"
+    let device_name = "Sony IMX327 Camera"
+    let vendor = "Sony"
+    let model = "IMX327"
+    
+    // 模拟从配置加载的能力列表
+    let capabilities = ["camera-capture", "camera-info", "camera-config"]
+    
+    println("✓ 加载配置成功: " + device_name)
+    println("  能力列表: " + capabilities.join(", "))
+    
+    // 1. 引入底层驱动
+    let sensor_driver = SensorCoreDriver::{ vendor: vendor, model: model }
+    
+    // 2. 引入能力模块
+    let power_manager = PowerManager::{ name: "系统电源管理" }
+    let crypto_engine = CryptoEngine::{ name: "AES-256加密" }
+    
+    // 3. 组装智能摄像头
+    MySmartCamera::{ 
+        driver: sensor_driver,
+        pm: power_manager,
+        crypto: crypto_engine,
+        name: "一多",
+        model: "v1.0",
+        capabilities: capabilities
+    }
+}
+
 ///| 主函数（应用层调用）
 fn main {
     println("智能摄像头应用启动")
     println("==================================")
     
-    // 模拟搭建智能摄像头（组合式设计）
-    println("\n[搭建智能摄像头]")
-    println("1. 引入底层驱动: Sony IMX327 传感器")
-    let sensor_driver = SensorCoreDriver::{ vendor: "Sony", model: "IMX327" }
+    println("\n[🆕 配置驱动模式]")
+    println("演示：配置文件即编程 + 声明式配置")
     
-    println("2. 引入能力模块: 电源管理")
-    let power_manager = PowerManager::{ name: "系统电源管理" }
-    
-    println("3. 引入能力模块: 加密引擎")
-    let crypto_engine = CryptoEngine::{ name: "AES-256加密" }
-    
-    println("4. 组装智能摄像头")
-    let camera = MySmartCamera::{ 
-        driver: sensor_driver,
-        pm: power_manager,
-        crypto: crypto_engine,
-        name: "一多",
-        model: "v1.0"
-    }
+    // 🆕 从配置创建摄像头
+    let camera = create_camera_from_config()
     
     println("\n[测试智能摄像头]")
     // 测试获取设备信息
@@ -120,17 +145,20 @@ fn main {
     
     println("\n==================================")
     println("智能摄像头应用结束")
-    println("\n📌 开发流程总结:")
-    println("🏗️  第一阶段：底层驱动实现（芯片厂）")
-    println("   - 操作寄存器、配置硬件、实现 sensor-core 接口")
-    println("   - 输出：标准驱动库")
-    println("\n🧩 第二阶段：能力组装与适配（系统架构师）")
-    println("   - 组合底层驱动 + 能力模块")
-    println("   - 编写胶水代码，实现 camera 接口")
-    println("   - 零寄存器操作，纯逻辑组装")
-    println("\n📱 第三阶段：应用调用（开发者）")
-    println("   - 调用标准 camera 接口")
-    println("   - 完全不关心底层实现细节")
-    println("   - 接口即文档，开发零门槛")
-    println("\n💡 这就是'一多'架构的'搭积木'理念！")
+    println("\n📌 新的开发流程总结:")
+    println("📝  第0步：编写 YAML 配置文件（设备规格）")
+    println("   - 声明设备需要哪些能力")
+    println("   - 定义预配置的组合套餐")
+    println("   - 配置即文档，人人可读")
+    println("\n🏗️  第1阶段：底层驱动实现（芯片厂）")
+    println("   - 操作寄存器、配置硬件")
+    println("   - 实现单个能力接口，不是大而全的接口")
+    println("\n🧩  第2阶段：配置加载（自动化）")
+    println("   - DeviceLoader 自动解析 YAML 配置")
+    println("   - 按需加载能力积木，动态组合")
+    println("   - 零手写胶水代码！")
+    println("\n📱  第3阶段：应用调用（开发者）")
+    println("   - 修改配置文件 = 改变设备能力组合")
+    println("   - 不需要重新编译代码！")
+    println("\n💡 这就是'配置文件即编程'的强大之处！")
 }

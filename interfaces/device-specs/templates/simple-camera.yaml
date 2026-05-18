@@ -1,0 +1,30 @@
+# 简单摄像头配置模板
+# 适用于只需要基本拍照功能的场景
+
+device:
+  id: simple-camera
+  name: "Simple Camera"
+  type: camera
+  vendor: Generic
+  model: Generic Camera
+
+chain:
+  foundation:
+    - base.types
+    - base.error
+  core:
+    - capabilities.diagnostics
+
+capabilities:
+  - name: camera-capture
+    version: "1.0.0"
+    required: true
+  
+  - name: camera-info
+    version: "1.0.0"
+    required: true
+
+combinations:
+  default:
+    - camera-capture
+    - camera-info

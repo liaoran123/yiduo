@@ -1,0 +1,26 @@
+// 相机配置能力 - 小而专一的能力积木
+
+use base.types.{result, string}
+use base.error.{Error}
+
+package yiduo:cap/camera-config
+
+/// 相机参数
+record camera-params {
+    resolution: string,
+    framerate: u32,
+    exposure: u32,
+    gain: u32,
+}
+
+/// 相机配置接口
+interface camera-config {
+    /// 设置相机参数
+    set-params: func(params: camera-params) -> result<unit, Error>;
+    /// 获取相机参数
+    get-params: func() -> result<camera-params, Error>;
+}
+
+world camera-config {
+    export camera-config;
+}

@@ -1,0 +1,26 @@
+// 相机信息能力 - 小而专一的能力积木
+
+use base.types.{result, string, list}
+use base.error.{Error}
+
+package yiduo:cap/camera-info
+
+/// 相机信息
+record camera-info {
+    vendor-id: u32,
+    device-id: u32,
+    model: string,
+    supported-resolutions: list<string>,
+}
+
+/// 相机信息接口
+interface camera-info {
+    /// 获取相机信息
+    get-info: func() -> result<camera-info, Error>;
+    /// 枚举所有可用相机
+    enumerate-cameras: func() -> result<list<camera-info>, Error>;
+}
+
+world camera-info {
+    export camera-info;
+}

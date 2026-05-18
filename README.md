@@ -32,6 +32,40 @@
 * **白嫖一切**：任何现有技术（Rust、C/C++、GPU驱动、AI框架）都可以直接使用
 * **关键价值**：定义统一接口，让各种技术无缝协作
 
+#### 📋 配置驱动的技术整合（新方案！）
+
+我们用**声明式配置**来调度整合技术，就像用配置文件组装设备一样！
+
+**核心思想**：
+- 声明式配置定义"需要什么技术"
+- MoonBit 加载器负责"如何组装"
+- 所有技术都是现成的，我们只是整合！
+
+**文件位置**：
+- 技术栈配置：[configs/tech-stacks/](../configs/tech-stacks/)
+- 应用场景配置：[configs/app-scenarios/](../configs/app-scenarios/)
+- 加载器实现：[runtime/tech_stack_loader.mbt](../runtime/tech_stack_loader.mbt)
+
+**示例**：
+```yaml
+# tech-stacks/smart-camera-stack.yaml
+components:
+  - name: "Rust 生态"  # 白嫖 Rust
+  - name: "FFmpeg"     # 白嫖 FFmpeg
+  - name: "PyTorch"    # 白嫖 PyTorch
+  - name: "OpenCV"     # 白嫖 OpenCV
+
+combinations:
+  edge-device: [...]    # 边缘设备套餐
+  professional: [...]   # 专业工作站套餐
+```
+
+**优势**：
+1. ✅ 灵活：修改配置文件 = 改变技术组合，无需重新编译
+2. ✅ 清晰：配置即文档，任何人都能看懂技术栈组成
+3. ✅ 复用：不同应用可以共享技术栈配置
+4. ✅ 演进：技术可以独立更新，通过配置组合出新能力
+
 我们的核心理念是：**通过标准化的"一"，赋能无限可能的"多"**
 
 ### 🌟 架构演进逻辑

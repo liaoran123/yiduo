@@ -1,0 +1,55 @@
+// 设备配置加载器 - 配置文件即编程的核心接口
+
+use base.types.{result, string, list, map}
+use base.error.{Error}
+
+package yiduo:cap/device-loader
+
+/// 设备基本信息
+record device-info {
+    id: string,
+    name: string,
+    type: string,
+    vendor: string,
+    model: string,
+}
+
+/// 能力规格
+record capability-spec {
+    name: string,
+    version: string,
+    required: bool,
+}
+
+/// 链式骨架配置
+record chain-config {
+    foundation: list<string>,
+    core: list<string>,
+}
+
+/// 完整设备配置
+record device-spec {
+    device: device-info,
+    chain: chain-config,
+    capabilities: list<capability-spec>,
+    combinations: map<string, list<string>>,
+}
+
+/// 设备加载器接口
+interface device-loader {
+    /// 从文件加载配置
+    load-config: func(path: string) -> result<device-spec, Error>;
+    
+    /// 验证配置正确性
+    validate-config: func(spec: device-spec) -> result<unit, Error>;
+    
+    /// 应用组合套餐
+    apply-combination: func(spec: device-spec, combo-name: string) -> result<list<string>, Error>;
+    
+    /// 列出所有可用设备配置
+    list-devices: func(dir: string) -> result<list<device-info>, Error>;
+}
+
+world device-loader {
+    export device-loader;
+}

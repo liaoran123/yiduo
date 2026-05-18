@@ -1,4 +1,5 @@
 // Hello World 应用
+
 ///|
 /// @component "base" "log"
 fn log(msg : String) -> Unit {

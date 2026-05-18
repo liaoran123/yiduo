@@ -1,0 +1,19 @@
+// 相机图像捕获能力 - 小而专一的能力积木
+
+use base.types.{result, list}
+use base.error.{Error}
+
+package yiduo:cap/camera-capture
+
+/// 图像数据类型
+type image = list<u8>
+
+/// 相机捕获接口
+interface camera-capture {
+    /// 捕获单张图像
+    capture: func() -> result<image, Error>;
+}
+
+world camera-capture {
+    export camera-capture;
+}

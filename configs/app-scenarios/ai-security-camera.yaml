@@ -1,0 +1,78 @@
+# AI 安防摄像头应用场景配置
+# 演示：从技术栈积木快速组装具体应用
+
+name: "AI 安防摄像头"
+description: "智能监控 + 人员检测 + 异常告警"
+version: "1.0.0"
+
+# 使用的技术栈（引用上面的配置）
+tech_stack: "smart-camera-stack"
+profile: "edge-device"  # 使用边缘设备套餐
+
+# 具体的应用组件
+app_components:
+  # 视频采集
+  - name: "摄像头采集模块"
+    interface: "camera-capture@1.0"
+    implementation: "V4L2"
+    required: true
+    
+  # 视频处理
+  - name: "视频编码模块"
+    interface: "video-encoder@1.0"
+    implementation: "FFmpeg (H.264)"
+    required: true
+    
+  # AI 推理
+  - name: "人员检测模型"
+    interface: "object-detection@1.0"
+    implementation: "PyTorch + YOLOv8"
+    required: true
+    
+  # 告警系统
+  - name: "异常告警模块"
+    interface: "alert-system@1.0"
+    implementation: "自定义"
+    required: false
+    
+  # 存储系统
+  - name: "视频存储"
+    interface: "storage@1.0"
+    implementation: "本地文件系统"
+    required: true
+
+# 数据流配置
+data_flow:
+  - step: "视频采集"
+    source: "摄像头采集模块"
+    output: "原始视频流"
+    
+  - step: "人员检测"
+    input: "原始视频流"
+    source: "人员检测模型"
+    output: "检测结果"
+    
+  - step: "异常判断"
+    input: "检测结果"
+    source: "异常告警模块"
+    output: "告警信号"
+    
+  - step: "视频编码存储"
+    input: "原始视频流"
+    source: "视频编码模块"
+    output: "编码视频"
+    destination: "视频存储"
+
+# 性能要求
+performance:
+  latency: "< 100ms"
+  fps: "30"
+  resolution: "1080p"
+  power_efficiency: "优先"
+
+# 扩展点（未来可以添加）
+extensions:
+  - "人脸识别"
+  - "行为分析"
+  - "云上传"
+  - "多摄像头联动"

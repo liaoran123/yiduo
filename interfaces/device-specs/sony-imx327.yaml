@@ -1,0 +1,61 @@
+# Sony IMX327 摄像头设备配置
+# 声明式配置文件 - 定义设备能力组合
+
+device:
+  id: sony-imx327
+  name: "Sony IMX327 Camera"
+  type: camera
+  vendor: Sony
+  model: IMX327
+
+# 链式骨架 - 稳定不变的基础
+chain:
+  foundation:
+    - base.types
+    - base.error
+  core:
+    - capabilities.power-saving
+    - capabilities.secure-element
+    - capabilities.diagnostics
+
+# 树形功能积木 - 灵活组合的能力
+capabilities:
+  # 必需的能力
+  - name: camera-capture
+    version: "1.0.0"
+    required: true
+  
+  - name: camera-info
+    version: "1.0.0"
+    required: true
+  
+  # 可选的能力
+  - name: camera-config
+    version: "1.0.0"
+    required: false
+  
+  - name: camera-stream
+    version: "1.0.0"
+    required: false
+
+# 预定义组合套餐
+combinations:
+  # 简单拍照套餐
+  simple:
+    - camera-capture
+    - camera-info
+  
+  # 专业套餐
+  professional:
+    - camera-capture
+    - camera-config
+    - camera-stream
+    - camera-info
+    - capabilities.power-saving
+  
+  # 安全监控套餐
+  security:
+    - camera-stream
+    - camera-info
+    - capabilities.power-saving
+    - capabilities.secure-element

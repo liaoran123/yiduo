@@ -1,0 +1,155 @@
+# 智能摄像头技术栈配置
+# 演示：不是重新发明技术，而是调度整合技术！
+# 核心：声明式配置 + 自动组装
+
+name: "智能摄像头技术栈"
+description: "AI 视觉处理 + 实时视频流 + 硬件加速"
+version: "1.0.0"
+
+# 基础组件（链式骨架，稳定不变）
+foundation:
+  - name: "MoonBit 运行时"
+    version: "latest"
+    role: "核心编排层"
+    required: true
+    
+  - name: "Wasmtime 虚拟机"
+    version: "20.0"
+    role: "组件执行环境"
+    required: true
+
+# 可复用技术组件（能力积木，灵活组合）
+# 这里列出我们可以"白嫖"的现有技术
+components:
+  # 语言生态
+  - name: "Rust 生态"
+    version: "1.75+"
+    category: "编程语言"
+    features: ["内存安全", "零成本抽象", "高性能"]
+    required: true
+    
+  - name: "C/C++ 生态"
+    version: "C17/C++20"
+    category: "编程语言"
+    features: ["底层控制", "成熟库", "性能优化"]
+    required: true
+    
+  - name: "Python 生态"
+    version: "3.10+"
+    category: "编程语言"
+    features: ["AI/ML 框架", "快速原型", "丰富库"]
+    required: false
+
+  # AI 框架
+  - name: "PyTorch"
+    version: "2.0+"
+    category: "AI 框架"
+    features: ["深度学习", "动态图", "推理加速"]
+    required: false
+    
+  - name: "TensorRT"
+    version: "8.6+"
+    category: "AI 推理"
+    features: ["GPU 加速", "量化优化", "低延迟"]
+    required: false
+
+  # 视频处理
+  - name: "FFmpeg"
+    version: "6.0+"
+    category: "多媒体"
+    features: ["编码解码", "格式转换", "流处理"]
+    required: true
+    
+  - name: "OpenCV"
+    version: "4.8+"
+    category: "计算机视觉"
+    features: ["图像处理", "特征检测", "摄像头采集"]
+    required: true
+
+  # 硬件访问
+  - name: "V4L2"
+    version: "Linux 6.0+"
+    category: "硬件抽象"
+    features: ["摄像头驱动", "帧缓冲", "视频捕获"]
+    required: true
+    
+  - name: "CUDA"
+    version: "12.0+"
+    category: "GPU 加速"
+    features: ["并行计算", "GPU 编程", "深度学习"]
+    required: false
+
+# 预定义组合套餐（应用场景）
+combinations:
+  # 套餐 1：边缘设备
+  edge-device:
+    name: "边缘设备配置"
+    description: "低功耗、轻量级 AI 推理"
+    components:
+      - "MoonBit 运行时"
+      - "Wasmtime 虚拟机"
+      - "Rust 生态"
+      - "FFmpeg"
+      - "OpenCV"
+      - "V4L2"
+    optimizations:
+      - "内存限制：256MB"
+      - "禁用 GPU 加速"
+      - "模型量化：INT8"
+  
+  # 套餐 2：专业工作站
+  professional:
+    name: "专业工作站配置"
+    description: "高性能、GPU 加速、全功能"
+    components:
+      - "MoonBit 运行时"
+      - "Wasmtime 虚拟机"
+      - "Rust 生态"
+      - "C/C++ 生态"
+      - "Python 生态"
+      - "PyTorch"
+      - "TensorRT"
+      - "FFmpeg"
+      - "OpenCV"
+      - "V4L2"
+      - "CUDA"
+    optimizations:
+      - "GPU 加速：启用"
+      - "内存限制：8GB"
+      - "模型精度：FP16"
+  
+  # 套餐 3：云服务器
+  cloud-server:
+    name: "云服务器配置"
+    description: "高并发、多流处理、分布式"
+    components:
+      - "MoonBit 运行时"
+      - "Wasmtime 虚拟机"
+      - "Rust 生态"
+      - "C/C++ 生态"
+      - "FFmpeg"
+      - "OpenCV"
+      - "V4L2"
+    optimizations:
+      - "并发连接：100+"
+      - "负载均衡：启用"
+
+# 集成规则（如何把技术组装在一起）
+integration:
+  # 通信方式
+  communication:
+    - "WIT 接口标准化"
+    - "零拷贝共享内存"
+    - "能力注入机制"
+  
+  # 优化策略
+  optimizations:
+    - "跨模块 LTO"
+    - "JIT 编译融合"
+    - "共享内存堆"
+  
+  # 安全策略
+  security:
+    - "Wasm 沙箱隔离"
+    - "能力模型权限控制"
+    - "组件动态加载"

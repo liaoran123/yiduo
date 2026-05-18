@@ -1,0 +1,23 @@
+// 相机视频流能力 - 小而专一的能力积木
+
+use base.types.{result, list}
+use base.error.{Error}
+
+package yiduo:cap/camera-stream
+
+/// 视频帧数据
+type frame = list<u8>
+
+/// 相机流接口
+interface camera-stream {
+    /// 开始视频流
+    start-stream: func() -> result<unit, Error>;
+    /// 停止视频流
+    stop-stream: func() -> result<unit, Error>;
+    /// 获取下一帧
+    get-frame: func() -> result<frame, Error>;
+}
+
+world camera-stream {
+    export camera-stream;
+}
