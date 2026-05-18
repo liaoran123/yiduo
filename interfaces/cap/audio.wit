@@ -1,0 +1,117 @@
+// 音频硬件接口
+
+use base.types.{result, option}
+use base.error.{Error}
+use yiduo:capabilities.{power_saving, diagnostics, firmware_update}
+
+package yiduo:unihal;
+
+/// 音频格式枚举
+enum audio_format {
+    Pcm16,        // 16-bit PCM
+    Pcm24,        // 24-bit PCM
+    Pcm32,        // 32-bit PCM
+    Float32,      // 32-bit float
+}
+
+/// 音频配置
+record audio_config {
+    sample_rate: u32,   // 采样率 (Hz)
+    channels: u8,       // 声道数 (1=单声道, 2=立体声)
+    format: audio_format,
+    buffer_size: u32,   // 缓冲区大小 (字节)
+}
+
+/// 音频设备信息
+record audio_info {
+    vendor_id: u32,
+    device_id: u32,
+    model: string,
+    max_sample_rate: u32,
+    min_sample_rate: u32,
+    max_channels: u8,
+}
+
+/// 音频输入设备资源（麦克风/线路输入）
+resource audio_input_device {
+    /// 获取支持的音频配置列表
+    get_input_configs: func() -> result<list<audio_config>, Error>
+
+    /// 配置音频输入
+    configure_input: func(config: audio_config) -> result<unit, Error>
+
+    /// 开始音频输入采集
+    start_capture: func() -> result<unit, Error>
+
+    /// 读取音频数据
+    read: func(buffer_id: u64, size: u32) -> result<u32, Error>
+
+    /// 停止音频输入采集
+    stop_capture: func() -> result<unit, Error>
+
+    /// 获取设备信息
+    get_info: func() -> result<audio_info, Error>
+
+    /// 设置输入音量 (0-100)
+    set_input_gain: func(gain: u8) -> result<unit, Error>
+
+    /// 获取当前输入音量
+    get_input_gain: func() -> result<u8, Error>
+
+    /// 关闭输入设备
+    close: func() -> result<unit, Error>
+
+    // 组合能力模块
+    power_saving: power_saving
+    diagnostics: diagnostics
+    firmware_update: firmware_update
+}
+
+/// 音频输出设备资源（扬声器/耳机）
+resource audio_output_device {
+    /// 获取支持的音频配置列表
+    get_output_configs: func() -> result<list<audio_config>, Error>
+
+    /// 配置音频输出
+    configure_output: func(config: audio_config) -> result<unit, Error>
+
+    /// 开始音频输出播放
+    start_playback: func() -> result<unit, Error>
+
+    /// 写入音频数据
+    write: func(buffer_id: u64, size: u32) -> result<u32, Error>
+
+    /// 停止音频输出播放
+    stop_playback: func() -> result<unit, Error>
+
+    /// 获取设备信息
+    get_info: func() -> result<audio_info, Error>
+
+    /// 设置输出音量 (0-100)
+    set_output_volume: func(volume: u8) -> result<unit, Error>
+
+    /// 获取当前输出音量
+    get_output_volume: func() -> result<u8, Error>
+
+    /// 关闭输出设备
+    close: func() -> result<unit, Error>
+
+    // 组合能力模块
+    power_saving: power_saving
+    diagnostics: diagnostics
+    firmware_update: firmware_update
+}
+
+/// 音频能力接口
+interface audio {
+    /// 打开音频输入设备
+    open_input: func() -> result<audio_input_device, Error>
+
+    /// 打开音频输出设备
+    open_output: func() -> result<audio_output_device, Error>
+}
+
+// 音频设备世界
+world audio {
+  import audio
+}

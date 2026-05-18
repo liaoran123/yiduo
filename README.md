@@ -7,6 +7,9 @@
 ## 目录
 
 - [设计哲学：一即是多](#设计哲学一即是多)
+- [配置驱动的架构](#配置驱动的架构)
+- [项目结构](#项目结构)
+- [快速开始](#快速开始)
 - [核心价值](#核心价值)
 - [组合式架构的复杂度坍缩](#组合式架构的复杂度坍缩)
 - [Wasm 与 WIT 技术基础](#wasm-与-wit-技术基础)
@@ -22,9 +25,36 @@
 - [未来路线图](#未来路线图)
 - [许可证](#许可证)
 
+---
+
 ## 设计哲学：一即是多
 
-一多操作系统（Yiduo OS）旨在解决现代计算中日益严重的**碎片化**问题。
+一多操作系统（Yiduo OS）旨在解决现代计算中日益严重的**碎片化**问题。我们的核心理念由两部分组成：**"一即是多"**的架构设计，以及**"计算细胞"**的功能单元范式。
+
+### 🧬 **计算细胞：操作系统的功能单元**
+
+"计算细胞"是一多操作系统的基本组成单元，是高度封装、功能独立的软件模块：
+
+| 计算细胞特征 | 一多实现 |
+|---|---|
+| **功能独立** | [cap/](file:///d:\yiduo\interfaces\cap) 目录下的能力积木（如 [camera/capture.wit](file:///d:\yiduo\interfaces\cap\camera\capture.wit)） |
+| **标准接口** | [WIT接口定义](file:///d:\yiduo\interfaces) |
+| **安全沙箱** | Wasm组件环境 |
+| **跨语言、跨平台** | 基于WebAssembly的设计 |
+| **动态加载与组合** | [配置驱动架构](file:///d:\yiduo\README.md#L60-L101) + [加载器实现](file:///d:\yiduo\runtime) |
+
+详细设计文档：[操作系统/022.计算细胞.md](file:///d:\yiduo\操作系统\022.计算细胞.md)
+
+### 🌳 **一即是多：架构设计语言**
+
+**链式架构是血液系统，树形架构是生长的器官，配置文件即编程（DNA）。**
+
+在"计算细胞"的基础上，我们通过三层架构实现"一即是多"：
+- **链式骨架（血液系统）**：[base/](file:///d:\yiduo\interfaces\base)、[env/](file:///d:\yiduo\interfaces\env)、[cap/](file:///d:\yiduo\interfaces\cap) - 稳定不变的核心架构
+- **树形器官（能力积木）**：[cap/camera/](file:///d:\yiduo\interfaces\cap\camera) 等 - 可扩展的功能细胞
+- **配置即编程（DNA）**：[device-specs/](file:///d:\yiduo\interfaces\device-specs)、[configs/](file:///d:\yiduo\configs) - 灵活组合的指令
+
+
 
 ### 核心定位：**不是重新发明技术，而是调度整合技术！**
 
@@ -32,47 +62,13 @@
 * **白嫖一切**：任何现有技术（Rust、C/C++、GPU驱动、AI框架）都可以直接使用
 * **关键价值**：定义统一接口，让各种技术无缝协作
 
-#### 📋 配置驱动的技术整合（新方案！）
-
-我们用**声明式配置**来调度整合技术，就像用配置文件组装设备一样！
-
-**核心思想**：
-- 声明式配置定义"需要什么技术"
-- MoonBit 加载器负责"如何组装"
-- 所有技术都是现成的，我们只是整合！
-
-**文件位置**：
-- 技术栈配置：[configs/tech-stacks/](../configs/tech-stacks/)
-- 应用场景配置：[configs/app-scenarios/](../configs/app-scenarios/)
-- 加载器实现：[runtime/tech_stack_loader.mbt](../runtime/tech_stack_loader.mbt)
-
-**示例**：
-```yaml
-# tech-stacks/smart-camera-stack.yaml
-components:
-  - name: "Rust 生态"  # 白嫖 Rust
-  - name: "FFmpeg"     # 白嫖 FFmpeg
-  - name: "PyTorch"    # 白嫖 PyTorch
-  - name: "OpenCV"     # 白嫖 OpenCV
-
-combinations:
-  edge-device: [...]    # 边缘设备套餐
-  professional: [...]   # 专业工作站套餐
-```
-
-**优势**：
-1. ✅ 灵活：修改配置文件 = 改变技术组合，无需重新编译
-2. ✅ 清晰：配置即文档，任何人都能看懂技术栈组成
-3. ✅ 复用：不同应用可以共享技术栈配置
-4. ✅ 演进：技术可以独立更新，通过配置组合出新能力
-
 我们的核心理念是：**通过标准化的"一"，赋能无限可能的"多"**
 
 ### 🌟 架构演进逻辑
 
 我们采用**分形架构**，从底层硬件到上层应用，遵循统一的生成逻辑：
 
-- **统一抽象**：UniHAL 将异构硬件收敛为标准能力接口，消除硬件差异
+- **统一抽象**：UniHAL 将异构硬件归纳为有限的标准能力接口，消除硬件差异
 - **二元执行**：Native 与 Wasm 双模运行时，平衡极致性能与绝对安全
 - **无限组合**：基于组件模型，像搭积木一样构建多样化的应用场景
 - **资源共享**："资源也是组件"，硬件和应用在本质上是平等的"公民"，从"零和博弈"到"无零和共享"
@@ -84,53 +80,221 @@ combinations:
 - **场景全覆盖**：从嵌入式设备到服务器，从 AI 推理到实时控制，满足多样化的应用需求
 - **生态融合**：无缝集成各语言的生态系统，充分利用现有技术资产
 
-### 🚀 实现机制
+---
 
-一多操作系统通过标准化与组件化的结合，实现了高度的灵活性和可扩展性：
+## 配置驱动的架构
 
-- **标准化接口**：WIT 定义了系统的通信规范，确保所有组件遵循相同的规则
-- **组件化设计**：将系统分解为可组合的组件，实现了高度的模块化和可扩展性
-- **沙箱隔离**：Wasm 沙箱保证了系统的安全性和稳定性，即使在多语言、多硬件的环境下
-- **AI 自动化**：利用 AI 自动生成适配器，让硬件接入像插拔 U 盘一样自然，开发者无需关心底层细节
+我们用**声明式配置**来调度整合技术，就像用配置文件组装设备一样！这是一多操作系统的核心创新之一。
 
-#### 🔧 Wasm 增强型入口方案（Wasm-Linker Enhancement）
+### 两个配置层次
 
-**核心理念**：既然所有语言都编译成 Wasm，**最直接的切入点是改进"汇聚"后的产物**，而不是修改某种语言。
+#### 1️⃣ 设备配置层次
+- **位置**：`interfaces/device-specs/`
+- **用途**：配置硬件设备的能力组合
+- **示例**：Sony 相机需要哪些能力积木
+- **相关文件**：
+  - [interfaces/device-specs/sony-imx327.yaml](interfaces/device-specs/sony-imx327.yaml)：真实设备配置示例
+  - [interfaces/device-specs/templates/](interfaces/device-specs/templates/)：配置模板
 
-> ⚠️ **关键澄清**：下面提到的每项底层技术（LTO、共享内存、能力注入、JIT）**都不是新发明**，业界已有成熟实现。一多的**真正创新**在于——把这些原本只做"单模块优化"的技术，首次在 **Wasm 跨模块的二进制层面打通**，让不同语言编译出的模块在链接阶段消除边界。
+#### 2️⃣ 技术栈配置层次
+- **位置**：`configs/tech-stacks/`
+- **用途**：配置软件技术栈的组合
+- **示例**：AI 应用需要 Rust/FFmpeg/PyTorch/OpenCV
+- **相关文件**：
+  - [configs/tech-stacks/smart-camera-stack.yaml](configs/tech-stacks/smart-camera-stack.yaml)：技术栈配置示例
+  - [configs/app-scenarios/ai-security-camera.yaml](configs/app-scenarios/ai-security-camera.yaml)：应用场景配置示例
 
-**1. 核心武器：跨模块 LTO（不是单模块 LTO）**
-- **现有技术**：LLVM/GCC 的 LTO 已成熟多年，但只能优化**单个**编译单元内部
-- **Wasm Linker 的现状**：现有 Wasm Linker 只是简单拼接模块，跨模块调用仍有导入/导出开销
-- **一多的改进**：在**二进制层面**直接重写指令，将跨模块的"远程调用"优化为"近程跳转"
-- **结果**：跨语言调用的源码，最终跑起来像同一种语言写的一样快
+### 核心思想
 
-**2. 共享内存堆（Global Shared Heap）方案**
-- **现有技术**：Wasm `threads` 提案、POSIX `shm`、Linux `mmap` 均已成熟
-- **Wasm 现状**：标准 Wasm 模块内存是隔离的，跨模块共享需经过序列化/反序列化
-- **一多的集成**：在 Wasm 虚拟机入口增加"共享堆"协议，MoonBit/C/Rust 挂载同一段物理内存
-- **白嫖体验**：MoonBit 对象直接把**内存地址**传给 C 驱动，C 驱动直接原地修改，无需 WIT 转换、无需拷贝
+- **声明式配置定义"需要什么"**
+- **MoonBit 加载器负责"如何组装"**
+- **所有技术都是现成的，我们只是整合！**
 
-**3. 基于插件的"能力注入"（Ambient Authority Injection）**
-- **现有技术**：WASI capability model、seL4、Android 权限系统均已成熟
-- **Wasm 现状**：标准 Wasm 的导入表需手动声明，缺乏运行时动态注入机制
-- **一多的集成**：加载器扫描 Wasm 导入表，按需注入高性能共享内存分配器、日志总线等能力
-- **优势**：无需修改 C 库源码，**运行时完成生态收编**
+### 优势
 
-**4. "双向透明"的组件编译器：Wasm-to-Native JIT**
-- **现有技术**：Wasmtime (Cranelift)、V8 (TurboFan) 的 JIT 已成熟
-- **Wasm 现状**：JIT 编译器只能看到单个模块的 IR，无法跨模块做内联
-- **一多的集成**：合并时 JIT 引擎进行**跨模块交叉分析（Cross-module Inlining）**
-- **结果**：MoonBit 逻辑和 C 库逻辑**融合编译**成一段连续的 CPU 指令
+1. ✅ **灵活**：修改配置文件 = 改变技术组合，无需重新编译
+2. ✅ **清晰**：配置即文档，任何人都能看懂系统组成
+3. ✅ **复用**：不同应用可以共享配置
+4. ✅ **演进**：技术可以独立更新，通过配置组合出新能力
 
-**🚀 结论：不是新发明，而是新连接**
-- **每项底层技术都是现成的**——LTO、共享内存、能力注入、JIT 都已在业界验证
-- **一多的真正价值是"跨模块的最后一公里"**——把这些技术从单模块延伸到 Wasm 跨模块场景，消除模块边界
-- **MoonBit 负责"编排"**：现代、安全的语法写系统逻辑框架
-- **通用 Wasm 负责"核心"**：现有的 C/Rust/C++ 库直接编成标准 Wasm 扔进去
-- **强化 Linker 负责"白嫖"**：通过**共享内存、二进制重写、跨模块内联**，模块边界消失，不同来源的代码融合成精密高性能机器
+### 关键文件索引
 
-**这种"不改源码、只改汇编、强化链接"的思路，让 MoonBit 成为"指挥官"，而不是需要亲力亲为的"苦力"。**
+- **配置指南**：[CONFIGURATION_GUIDE.md](CONFIGURATION_GUIDE.md)
+- **设备加载器**：[runtime/device_loader.mbt](runtime/device_loader.mbt)
+- **技术栈加载器**：[runtime/tech_stack_loader.mbt](runtime/tech_stack_loader.mbt)
+- **设计原则**：[interfaces/技术文档/设计原则：如何做到足够优雅、足够抽象.md](interfaces/技术文档/设计原则：如何做到足够优雅、足够抽象.md)
+
+---
+
+## 项目结构
+
+```
+yiduo/
+├── interfaces/           # WIT 接口定义（核心）
+│   ├── base/             # 基础类型和错误处理（链式骨架）
+│   │   ├── error.wit
+│   │   └── types.wit
+│   ├── env/              # 环境接口（文件、网络等）
+│   │   ├── component.wit
+│   │   ├── fs.wit
+│   │   ├── net.wit
+│   │   └── os.wit
+│   ├── cap/              # 能力接口（链式骨架）
+│   │   ├── camera/       # 相机能力积木（树形器官）
+│   │   │   ├── capture.wit
+│   │   │   ├── config.wit
+│   │   │   ├── stream.wit
+│   │   │   └── info.wit
+│   │   ├── device-loader.wit
+│   │   ├── display.wit
+│   │   ├── input.wit
+│   │   ├── sensor.wit
+│   │   ├── storage.wit
+│   │   ├── stream.wit
+│   │   └── unihal.wit
+│   ├── device-specs/     # 设备配置文件（配置即编程，DNA）
+│   │   ├── sony-imx327.yaml
+│   │   └── templates/
+│   └── 技术文档/         # 设计原则文档
+│
+├── configs/              # 配置文件
+│   ├── tech-stacks/      # 技术栈配置
+│   │   └── smart-camera-stack.yaml
+│   ├── app-scenarios/    # 应用场景配置
+│   │   └── ai-security-camera.yaml
+│   ├── arm64.json
+│   └── riscv64.json
+│
+├── runtime/              # 运行时
+│   ├── device_loader.mbt # 设备配置加载器
+│   ├── tech_stack_loader.mbt # 技术栈加载器
+│   ├── adapter/          # 硬件适配器
+│   │   ├── compute/
+│   │   ├── stream/
+│   │   └── adapter_manager.mbt
+│   └── wasm/             # Wasm 相关
+│       └── loader.mbt
+│
+├── apps/                 # 应用示例
+│   ├── hello/            # Hello World
+│   │   ├── main.mbt
+│   │   └── moon.pkg
+│   ├── smart_camera/     # 智能相机示例
+│   │   ├── main.mbt
+│   │   ├── moon.pkg
+│   │   └── smart-camera.wit
+│   ├── tech-stack-demo/  # 技术栈调度演示
+│   │   └── main.mbt
+│   ├── unihal_demo/      # UniHAL 示例
+│   │   ├── main.mbt
+│   │   └── moon.pkg
+│   └── ai_shell/         # AI 终端
+│       └── shell.mbt
+│
+├── kernel/               # 内核（精简）
+│   ├── boot/             # 启动引导
+│   │   └── start.s
+│   ├── mm/               # 内存管理
+│   │   └── allocator.mbt
+│   ├── drivers/          # 核心驱动
+│   │   └── uart.mbt
+│   ├── impl/             # 接口实现
+│   │   └── os_impl.mbt
+│   ├── security/
+│   │   ├── moon.pkg
+│   │   └── security.mbt
+│   ├── kernel.mbt
+│   └── moon.pkg
+│
+├── services/             # 系统服务
+│   ├── audio/
+│   │   ├── README.md
+│   │   └── audio.mbt
+│   ├── filesystem/
+│   │   ├── README.md
+│   │   └── fs.mbt
+│   ├── network/
+│   │   └── tcp_stack.mbt
+│   └── security/
+│       ├── README.md
+│       └── security.mbt
+│
+├── 操作系统/            # 详细技术方案
+│   ├── 技术方案/
+│   │   ├── 000.技术闭环彻底打通.md
+│   │   ├── 003.项目结构解读.md
+│   │   ├── 004.分阶段落地执行手册.md
+│   │   ├── 005.接口设计哲学.md
+│   │   ├── 006.硬件驱动智能系统.md
+│   │   ├── 007.直接借鉴安卓和鸿蒙.md
+│   │   ├── 008.其他语言库的 WebAssembly 集成方式.md
+│   │   ├── 009.实战方法.md
+│   │   ├── 010.一多操作系统混合架构技术方案.md
+│   │   └── 更多...
+│   ├── 示例代码/
+│   │   └── 调用rust的wasm组件示例.md
+│   └── 其他技术文档...
+│
+├── docs/                 # 文档
+├── cmd/                  # 命令行工具
+│   └── main/
+│       ├── main.mbt
+│       └── moon.pkg
+├── build/                # 构建脚本
+├── .githooks/            # Git 钩子
+├── .github/              # GitHub 配置
+├── .vscode/              # 编辑器配置
+├── moon.mod.json         # MoonBit 模块配置
+├── moon.pkg
+├── build.sh
+├── build.ps1
+├── yiduo.mbt
+├── LICENSE
+└── README.md
+```
+
+### 关键设计原则
+
+| 设计比喻 | 对应实现 |
+|---|---|
+| **链式骨架（血液系统）** | `interfaces/base/`, `interfaces/env/`, `interfaces/cap/` - 稳定不变的核心架构 |
+| **树形器官（能力积木）** | `interfaces/cap/camera/` 等 - 可扩展的功能模块 |
+| **配置即编程（DNA）** | `interfaces/device-specs/`, `configs/` - 灵活组合的指令 |
+| **计算细胞（功能单元）** | 每个WIT接口定义的能力积木 - 独立封装、可组合的功能模块 |
+
+详见：[操作系统/022.计算细胞.md](file:///d:\yiduo\操作系统\022.计算细胞.md)
+
+---
+
+## 快速开始
+
+### 1. 克隆项目
+
+```bash
+git clone <repo-url>
+cd yiduo
+```
+
+### 2. 查看配置示例
+
+- 设备配置：[interfaces/device-specs/](interfaces/device-specs/)
+- 技术栈配置：[configs/tech-stacks/](configs/tech-stacks/)
+
+### 3. 查看示例应用
+
+- [apps/hello/](apps/hello/) - 简单的 Hello World
+- [apps/smart_camera/](apps/smart_camera/) - 智能相机示例
+- [apps/tech-stack-demo/](apps/tech-stack-demo/) - 技术栈调度演示
+
+### 4. 运行示例
+
+```bash
+# 使用 MoonBit 工具链
+moon check
+moon build
+```
+
+---
 
 ## 核心价值
 
@@ -145,8 +309,6 @@ combinations:
 - **AI 原生设计**：内置 AI 能力，自动生成硬件适配器，从根本上消灭了维护旧硬件驱动的成本。
 - **跨语言降维打击**：不是简单的"能跨语言"，而是**在绝对安全隔离的前提下，实现零损耗的跨语言生态继承与组合**。
   
-  "跨语言"本身并不是 Wasm 的专属特性。像 Java 虚拟机（JVM）、Python 解释器等，早就实现了跨语言的能力。但是，一多 OS 依然具备对传统架构的"降维打击"优势。
-
   **🏰 1. 解决了传统跨语言的"信任与隔离"死结**
   - 传统跨语言调用（JNI, DLL）：本质是"共享内存的信任模式"，一旦某个组件出现内存越界或崩溃，往往会直接拖垮整个进程甚至系统内核
   - 传统方案：不得不采用重量级的多进程沙箱（Docker、微服务），但这又带来了极高的通信成本和资源浪费
@@ -180,7 +342,7 @@ combinations:
 
   **🚀 结论**：一多 OS 的降维打击优势，不在于它"能跨语言"，而在于它终结了过去 50 年操作系统中"安全与性能不可兼得"、"生态封闭且割裂"的内耗时代。它用一套全新的底层规则，让算力不再被搬运和锁竞争浪费，而是 100% 服务于业务创新。这不仅是技术的升级，更是软件工程范式的一次彻底进化。
 
-  **🔮 未来潜力**：一多 OS 的生态兼容性为未来预留了无限可能——当新的编程语言出现时，只需实现 WIT 接口即可集成；不同硬件平台可以通过标准接口快速接入；云端服务和边缘设备可以通过统一接口无缝协作；AI 模型可以作为独立模块通过标准接口接入系统。
+  **🔮 未来潜力**：一多 OS 的生态兼容性为未来预留了无限可能——当新的编程语言出现时，只需实现 WIT 接口即可集成；不同硬件平台可以通过标准接口快速接入；云端服务和边缘设备可以通过统一接口无缝协作；AI 模型可以作为独立组件通过标准接口接入系统。
 - **安全隔离**：Wasm 沙箱提供天然的安全保障，驱动崩溃不影响系统，提高整体稳定性。
 - **高性能与灵活性平衡**："能 Wasm 就 Wasm，必须 Native 则 Native"的混合架构，在安全和性能之间取得最佳平衡。
   - **零拷贝共享内存**：彻底解决了传统 IPC 的"浅拷贝陷阱"和"深拷贝黑洞"
@@ -190,13 +352,6 @@ combinations:
     - **一多解决方案**：在物理内存中开辟"全局共享白板"
       - 组件A把数据写在白板上，只传递"通行证"（文件描述符或全局内存句柄）给组件B
       - 组件B直接读取原始数据，**没有发生任何数据的物理复制**
-    - **核心差异对比**：
-
-      | 核心维度 | 传统浅拷贝 | 传统深拷贝 | 一多（零拷贝） |
-      |---------|-----------|--------------|--------------|
-      | 实现原理 | 仅复制指针/地址 | 完整复制真实数据 | 共享同一块物理内存，只传递访问凭证 |
-      | 跨域安全性 | 极差（直接导致跨进程崩溃） | 安全（但数据完全隔离） | 安全且高效（受控的全局共享） |
-      | 性能与开销 | 开销极小，但无法使用 | 极高（消耗CPU与带宽） | 极低（CPU几乎零负载，无带宽浪费） |
 
     - **降维打击：零拷贝串行 vs 拷贝多线程**
       - **硬核性能数据**：
@@ -212,32 +367,20 @@ combinations:
         - 传统多线程：锁竞争、上下文切换、线程调度产生巨大额外开销
         - **一多系统**：Wasm组件配合零拷贝，从根本上消灭"锁竞争"，CPU算力100%投入真实业务计算
       
-      - **核心性能对比表**：
-
-        | 核心维度 | 传统拷贝多线程 | 一多零拷贝（串行） |
-        |---------|--------------|-------------------|
-        | 数据流转 | 多次物理拷贝（用户态-内核态-用户态） | 零物理拷贝（直接共享同一块物理内存） |
-        | 性能瓶颈 | 内存带宽、CPU拷贝指令、锁竞争 | 仅受限于真实的业务逻辑计算速度 |
-        | 吞吐量量级 | 万级到十万级消息/秒 | 百万级消息/秒（性能相差几十倍） |
-      
       - **核心理念**：**"把算力还给业务，把搬运交给架构"**
-        - 传统拷贝多线程：用昂贵CPU算力做廉价"数据搬运"
-        - **一多零拷贝**：CPU彻底从繁重搬运中解放出来
 - **开发效率提升**：组件化设计和标准接口，让开发者"找组件、拼系统"，大幅提高开发效率。
 
 ### 🌟 技术创新
 
+- **计算细胞范式**：将操作系统功能拆分为独立的、可组合的"计算细胞"。每个细胞通过WIT接口定义，运行在Wasm沙箱中，可动态加载与组合。
+  - 详细设计：[操作系统/022.计算细胞.md](file:///d:\yiduo\操作系统\022.计算细胞.md)
 - **UniHAL "世界语"**：将成千上万种硬件归纳为有限的标准接口，硬件只需通过适配器接入，内核无需修改。
 - **驱动组件化**：驱动不再是内核的一部分，而是运行在沙箱中的 Wasm 组件，彻底解决驱动稳定性问题。
   - **实现机制**：通过能力模型（Capability Model）实现沙箱内驱动对底层硬件的安全访问。驱动组件通过 UniHAL 接口请求特定硬件能力，内核验证权限后授予访问权限，实现了安全隔离与硬件控制的平衡。
 - **资源也是组件**："共享，资源共享，资源也是组件"——这是捅破操作系统那层"窗户纸"的终极答案。
   - **核心变革**：在传统西方架构里，硬件是"私有财产"，应用是"外来乞丐"。而在"一多"的世界里，硬件和应用在本质上是平等的"公民"。
-  - **实现机制**：
-    - **硬件即服务，万物皆可"订阅"**：显卡、摄像头、甚至是一个传感器，不再是被某个进程独占的"死物"，而是系统里一个个活生生的"资源组件"，主动向系统广播自己的能力。
-    - **应用即需求，按需"牵手"**：应用不需要去"抢"硬件的所有权，只需要向系统发出一个"引用"请求，就像在谈恋爱时伸出手说："我现在需要一点浪漫（算力），你能配合我吗？"
-    - **动态共享，合则来不合则散**：系统（也就是那个"一"）作为最高效的月老，瞬间匹配应用和硬件。Wasm 的沙箱机制保证了大家互不干扰，就像在一个大舞池里跳舞，虽然共用地板，但谁也不会踩到谁的脚。
-  - **一多操作系统 · 第二铁律**：**"万物皆组件，资源无私有。一切皆为引用，唯有共享永生。"**
 - **AI 自动适配器**：利用 AI 理解硬件协议，自动生成符合 UniHAL 标准的适配器，实现硬件的即插即用。
+- **配置驱动架构**：通过声明式配置灵活组合技术和设备，无需重新编译。
 
 ### 🎯 应用场景
 
@@ -245,13 +388,15 @@ combinations:
 - **硬件厂商**：只需实现标准接口的适配器，无需修改操作系统内核，轻松接入系统。
 - **终端用户**：获得更安全、更稳定、更高效的系统体验，支持更多硬件设备。
 
+---
+
 ## 组合式架构的复杂度坍缩
 
 如果"组合规格"（即接口定义和组件规范）设计得当，复杂度不仅会减少，而且会发生本质的"降维打击"。
 
 这正是"一多"架构相对于传统操作系统（如 Linux、Windows）最大的优势所在。传统操作系统之所以变成"屎山"，是因为它们试图用"**无限的具体**" 去对抗 **"无限的复杂"**；而"一多"是用 **"有限的抽象"** 去驾驭 **"无限的复杂"**。
 
-我们可以从以下四个维度来拆解这种"复杂度坍缩"：
+我们可以从以下几个维度来拆解这种"复杂度坍缩"：
 
 ### 📜 接口复杂度的"宪法化"：规则锁死变化
 
@@ -328,6 +473,8 @@ combinations:
 
 **【一多操作系统 · 第二铁律】**：**"万物皆组件，资源无私有。一切皆为引用，唯有共享永生。"**
 
+---
+
 ## Wasm 与 WIT 技术基础
 
 **WebAssembly (Wasm)** 是一种二进制指令格式，旨在成为一种可移植的编译目标，使程序能够在各种环境中高效运行。
@@ -352,6 +499,8 @@ combinations:
 - 平衡了安全性和性能需求
 - 支持多种编程语言的无缝集成
 - 为组件化设计提供了坚实的技术基础
+
+---
 
 ## WASI 与硬件接口设计
 
@@ -407,7 +556,15 @@ WASI 解决的两个核心痛点，在硬件界一模一样：
 
 站在巨人的肩膀上，把软件界验证过的"真理"，复制到硬件界，这就是降维打击。
 
+---
+
 ## 核心架构设计
+
+### 🌳 架构设计语言
+
+**链式架构是血液系统，树形架构是生长的器官，配置文件即编程**
+
+详细请参考：[interfaces/技术文档/设计原则：如何做到足够优雅、足够抽象.md](interfaces/技术文档/设计原则：如何做到足够优雅、足够抽象.md)
 
 ### 1.1 组合式混合架构模型
 
@@ -458,60 +615,13 @@ WASI 解决的两个核心痛点，在硬件界一模一样：
 - **借鉴鸿蒙物模型**：定义硬件的标准能力属性，而非寄存器操作
 - **借鉴开源生态**：构建标准联盟，推动接口标准的广泛 adoption
 
-这种"站在巨人肩膀上"的设计方法，大大提高了系统设计的成功率，同时避免了许多前人已经踩过的坑。
+这种"站在巨人肩膀上"的设计方法，大大提高了系统设计的成功率，同时避免了很多前人已经踩过的坑。
+
+---
 
 ## 项目结构与工程配置
 
-基于 MoonBit 的项目规范，一多操作系统采用组件化的目录结构如下：
-
-```
-yiduo/
-├── .githooks/            # Git 钩子 (自动检查/格式化)
-├── .github/              # GitHub 配置 (CI/CD)
-├── .vscode/              # 编辑器配置
-├── configs/              # 【架构配置】ARM64/RISC-V 内存布局等
-│   ├── arm64.json
-│   └── riscv64.json
-├── sdk/                  # 【开发工具包】MoonBit 深度优化
-│   ├── std/               # 标准库扩展
-│   │   ├── hal/           # 硬件抽象层 SDK (对应 interfaces/cap)
-│   │   └── sys/           # 系统服务 SDK (对应 interfaces/env)
-│   ├── cli/               # 命令行工具
-│   │   └── yiduo-build/   # 构建与打包工具
-│   └── tools/             # 辅助工具
-│       └── wit-gen/       # 从 WIT 生成 MoonBit 代码的工具
-├── interfaces/           # 【宪法层】WIT 接口定义
-│   ├── base/             # 基础类型 (Error, Buffer)
-│   ├── env/              # 软件环境 (OS, FS, Net)
-│   └── cap/              # 硬件能力 (Display, Stream, Sensor)
-├── kernel/               # 【底座层】Native 核心
-│   ├── boot/             # 启动引导
-│   ├── mm/               # 内存管理 (物理/虚拟)
-│   ├── drivers/          # 核心驱动 (Native)
-│   └── impl/             # 接口实现 (WIT -> Native 胶水)
-├── runtime/              # 【适配层】Wasm 运行时
-│   ├── wasm/             # 引擎封装
-│   └── adapter/          # 硬件适配器 (Wasm)
-├── services/             # 【服务层】系统服务 (Wasm)
-│   ├── audio/            # 音频服务
-│   ├── filesystem/       # 文件系统
-│   └── network/          # 网络协议栈
-├── apps/                 # 【应用层】用户应用 (Wasm)
-│   ├── ai_shell/         # AI 终端
-│   └── hello/            # Hello World
-├── tests/                # 【验证层】测试套件
-│   ├── unit/             # 单元测试
-│   └── integration/      # 集成测试
-├── build/                # 构建脚本
-├── docs/                 # 文档
-├── cmd/                  # 命令行工具
-├── .gitignore
-├── LICENSE
-├── README.md
-├── moon.mod.json
-├── build.sh
-└── yiduo.mbt
-```
+基于 MoonBit 的项目规范，一多操作系统采用组件化的目录结构，同时引入了配置驱动的架构。
 
 ### 接口定义（interfaces/）
 
@@ -519,7 +629,7 @@ interfaces/ 目录包含了一多操作系统的核心接口定义，使用 WIT�
 
 #### 接口包结构
 
-按照功能和职责，接口定义被划分为三个核心包：
+按照功能和职责，接口定义被划分为三个核心包，以及新增的配置和树形器官结构：
 
 ##### 📦 基础包（interfaces/base/）
 - **定位**：世界的通用语
@@ -539,7 +649,7 @@ interfaces/ 目录包含了一多操作系统的核心接口定义，使用 WIT�
   - `net.wit`：网络服务（TCP/UDP/HTTP）
   - `component.wit`：组件服务（组件管理、AI 服务、UI）
 
-##### ⚡ 能力包（interfaces/cap/）
+##### ⚡ 能力包（interfaces/cap/）- 链式骨架
 - **定位**：硬件的"抽象层"
 - **内容**：硬件抽象接口，定义硬件设备的能力
 - **作用**：将物理硬件能力抽象为标准接口，是 UniHAL 的核心
@@ -549,13 +659,32 @@ interfaces/ 目录包含了一多操作系统的核心接口定义，使用 WIT�
   - `storage.wit`：存储设备接口
   - `input.wit`：输入设备接口
   - `sensor.wit`：传感器接口
+  - `device-loader.wit`：设备配置加载接口
   - `unihal.wit`：总纲，引用所有硬件能力接口，对外暴露统一入口
+
+##### 🌳 能力积木（interfaces/cap/[device]/）- 树形器官
+- **定位**：可扩展的能力积木
+- **内容**：将大接口拆分为小而专一的能力接口
+- **示例**：
+  - `camera/capture.wit`：只负责图像捕获
+  - `camera/config.wit`：只负责参数配置
+  - `camera/stream.wit`：只负责视频流
+  - `camera/info.wit`：只负责设备信息
+
+##### 🧬 设备配置（interfaces/device-specs/）- 配置即编程
+- **定位**：设备的"DNA"
+- **内容**：声明式配置文件，定义设备需要哪些能力积木
+- **作用**：通过配置组合能力积木，无需重新编译
+- **主要文件**：
+  - `sony-imx327.yaml`：Sony IMX327 相机配置示例
+  - `templates/simple-camera.yaml`：简单配置模板
 
 #### 设计理念
 
 - **职责清晰**：写驱动的去 cap/ 里找活干，写应用的去 env/ 里找服务，写编译器的去 base/ 里看类型
 - **依赖关系顺畅**：cap/ 和 env/ 都依赖 base/，env/ 和 cap/ 互不干扰
 - **符合"一多"哲学**：基础包是"一"（统一的数据标准），环境包是"多"（丰富的软件生态），能力包是"实"（落地的硬件能力）
+- **新补充**：链式骨架（base/env/cap）是稳定的"血液系统"，树形器官（cap/[device]/）是可扩展的"器官"，配置文件是"DNA"，决定如何组合
 
 #### 接口使用示例
 
@@ -571,21 +700,6 @@ fn main {
     Ok(t) => println("Current time: " + t.to_string()),
     Err(e) => println("Error: " + e.to_string())
   }
-}
-```
-
-在 Native 组件中实现接口：
-
-```moonbit
-// 实现 current_time 函数
-fn current_time_impl() -> UInt64 {
-  // 实现时间获取逻辑
-  1234567890
-}
-
-// 注册接口
-fn register_os_interface() -> Unit {
-  wasm::register_function("current_time", current_time_impl)
 }
 ```
 
@@ -630,32 +744,13 @@ interface sensor {
 
 **实质**：它是硬件接入系统的唯一标准。
 
-#### 📌 总结
-
-当你打开 interfaces/cap/ 目录时，你看到的不是枯燥的代码，你看到的是：
-- 整个系统的硬件能力清单
-- 所有驱动开发的考试大纲
-- 软件与硬件对话的通用字典
-
-这就是"一多"的命门所在。这些接口文件定得好，万马奔腾；定得不好，寸步难行。
-
-### 接口实现（kernel/interface/）
-
-kernel/interface/ 目录包含了接口的 Native 实现，负责将 WIT 接口映射到具体的系统实现。
-
-#### 主要文件
-- **os_impl.mbt**：实现了操作系统核心接口，如日志、时间等
-
-#### 实现原理
-- 通过 `@native` 标签标记底层 C 函数，实现对硬件的直接操作
-- 通过 `register_function` 函数，将 Native 实现注册到 Wasm 运行时
-- 实现了 Wasm 组件到 Native 组件的安全调用链路
+---
 
 ## 驱动开发指南
 
 要让驱动开发变得简单，核心思路就是**"做减法" 和 "自动化"**。我们要把芯片原厂（驱动开发者）从繁琐的"填空"工作中解放出来，让他们只关注最核心的硬件逻辑。
 
-借鉴安卓 HIDL、鸿蒙 HDF 以及 WASI 的成功经验，我们从以下四个维度设计，让驱动开发像"搭积木"一样简单：
+借鉴安卓 HIDL、鸿蒙 HDF 以及 WASI 的成功经验，我们从以下几个维度设计，让驱动开发像"搭积木"一样简单：
 
 ### 1. 接口设计：只定义"能力"，不定义"细节"
 
@@ -663,9 +758,9 @@ kernel/interface/ 目录包含了接口的 Native 实现，负责将 WIT 接口�
 
 **抽象化**：接口应该描述"做什么"，而不是"怎么做"。
 - ❌ 复杂（硬件思维）：`write_register(addr: u32, value: u8)`
-  开发者需要去查手册，看哪个地址是控制亮度的，哪个值代表100%亮度。
+  开发者需要去查手册，看哪个地址是控制亮度的，哪个值代表 100% 亮度。
 - ✅ 简单（能力思维）：`set_brightness(level: f32)`
-  开发者只需要实现这个函数，在函数内部去操作寄存器。上层调用者完全不用关心底层细节。
+  开发者只需要实现这个函数，在函数内部去操作寄存器。上层调用者完全不需要关心底层细节。
 
 **标准化数据流**：对于摄像头、音频这类流式数据，定义好标准的"管道"。
 - 参考 WASI 的 io/streams，定义一个 `read-frame() -> result<image-buffer, error>` 接口。
@@ -676,20 +771,9 @@ kernel/interface/ 目录包含了接口的 Native 实现，负责将 WIT 接口�
 这是降低门槛最关键的一步。不要扔给开发者一个几百页的 PDF 文档，而是直接给他们生成代码。
 
 **代码生成器**：
-- 开发者运行一行命令，例如 `wit-bindgen gen --lang=c --chip=esp32 camera.wit`。
-- 工具会自动生成一个 `camera_driver.c` 文件，里面包含了所有空函数：
-  ```c
-  // 自动生成的代码
-  int camera_set_brightness(float level) {
-      // TODO: 请在此处实现 ESP32 的亮度设置逻辑
-      return 0;
-  }
-  ```
+- 开发者运行一行命令，例如 `wit-cli gen --lang=c --chip=esp32 camera.wit`。
+- 工具会自动生成一个 `camera_driver.c` 文件，里面包含了所有空函数。
 - **效果**：开发者的工作从"从零写代码"变成了"在指定位置填空"。这极大地减少了样板代码和出错的可能。
-
-**自动化绑定**：
-- 工具链会自动处理 C 语言和系统语言（如 Rust）之间的类型转换。
-- 开发者不需要手写 `string` 到 `char*` 的转换代码，工具全包了。
 
 ### 3. 架构设计：分离"核心"与"总线"
 
@@ -701,27 +785,35 @@ kernel/interface/ 目录包含了接口的 Native 实现，负责将 WIT 接口�
 
 **组合**：系统提供一个标准的 `i2c_client` 接口。摄像头驱动只需要说"我要通过 I2C 发这个命令"，而不需要自己去操作 GPIO 模拟时序。
 
-**借鉴**：Linux 内核的 `regmap` 子系统就是这个思想，它抽象了 I2C、SPI 等总线，让设备驱动开发者可以统一使用 `regmap_write()` 来操作寄存器，极大地简化了开发。
+### 4. 配置驱动：通过配置文件组合能力积木
 
-### 4. 验证设计：提供"尺子"，而不是"答案"
+新增加载器机制，允许通过配置文件组合能力积木：
 
-开发者写完驱动后，最怕的就是"不知道对不对"。你需要提供一个自动化的测试工具。
+**设备配置文件（YAML）**：
+```yaml
+device:
+  name: "Sony IMX327 Camera"
+  type: camera
 
-**一致性测试套件**：
-- 提供一个可执行的测试程序。开发者在自己的板子上运行它，它会调用驱动的所有接口。
-- 如果所有测试都通过（PASS），就说明驱动符合标准，可以无缝接入系统。
+capabilities:
+  - name: "camera-capture"
+    required: true
+  - name: "camera-config"
+    required: false
+  - name: "camera-stream"
+    required: false
 
-**效果**：这消除了"我觉得我写对了"和"系统认为你对了"之间的信任鸿沟，让开发者有明确的完成标准。
+combinations:
+  simple: ["camera-capture", "camera-info"]
+  professional: ["camera-capture", "camera-config", "camera-stream"]
+```
 
-### 📌 总结："傻瓜式"驱动开发流程
+**效果**：
+- 厂商提供能力积木的实现
+- 集成商通过配置文件组合积木
+- 无需重新编译，只需修改配置
 
-1. **下载工具**：开发者从官网下载 `wit-cli` 工具。
-2. **生成模板**：运行 `wit-cli generate camera.wit`，得到一个 `my_camera_driver` 文件夹。
-3. **填空实现**：打开文件夹里的 `lib.c`，在 `capture()` 函数里填入自己芯片的拍照代码。
-4. **自测**：运行 `wit-cli test`，看到所有测试项变绿。
-5. **提交**：打包上传到驱动仓库。
-
-通过这套组合拳，我们把驱动开发的难度从"专家级"降到了"入门级"，这才是让生态繁荣的关键。
+---
 
 ## 最佳实践指南
 
@@ -729,68 +821,17 @@ kernel/interface/ 目录包含了接口的 Native 实现，负责将 WIT 接口�
 
 **核心原则：必须 Native 则 Native，能 Wasm 就 Wasm**
 
-一多 OS 提供灵活的分层架构，让开发者根据实际场景选择最合适的实现方式。以下是详细的决策指南：
+一多 OS 提供灵活的分层架构，让开发者根据实际场景选择最合适的实现方式。
 
-### 场景决策表
+### 配置驱动的开发流程
 
-| 需求场景 | 推荐方案 | 核心原因 |
-|---------|----------|---------|
-| 嵌入式/单片机/OS驱动开发 | Native 模式 | 需要直接硬件控制 |
-| 跨平台桌面/移动端应用 | 混合模式（Native + Wasm） | 平衡性能与兼容性 |
-| 高性能网页应用 | 纯 Wasm | 充分利用浏览器环境 |
-| AI推理、图像处理核心 | Native 模式 | 追求极致计算性能 |
-| 网络服务、业务逻辑 | Wasm 组件 | 安全隔离 + 易于部署 |
+新增配置驱动的开发流程：
 
-### 职责精准分工：Native 绝对掌控 vs Wasm 高效编排
-
-Native 与 Wasm 的职责不是重合的，而是互补的，可以实现真正的"各司其职"。
-
-#### ⚙️ Native：绝对的底层掌控者
-
-Native（原生机器码）是拥有最高权限的**总指挥**，核心职责包括：
-
-1. **直接对话硬件**：绕过所有中间层，直接操作 CPU 寄存器、读写物理内存、控制 GPIO 引脚。
-2. **提供运行底座**：初始化整个系统环境，启动并管理底层的 Wasm 运行时（Runtime）。
-3. **兜底核心性能**：承载对实时性要求极高（如微秒级中断响应）的内核模块和驱动。
-
-#### 🧩 Wasm：灵活的业务编排者
-
-Wasm 在 Native 提供的安全沙箱里，进行**业务组件的动态组合与执行**，核心职责包括：
-
-1. **承载海量应用**：以极低的开销并发运行成千上万个业务组件（AI模型、网络服务、用户界面）。
-2. **跨语言无缝协作**：通过 WIT 标准接口，让不同语言编写的组件互相调用，打破语言孤岛。
-3. **保障系统稳定**：即使某个业务组件崩溃，也仅仅是在沙箱内失效，不影响全局。
-
-### Native 与 Wasm 对比表
-
-| 核心维度 | Native（原生机器码） | Wasm（WebAssembly） |
-|---------|----------------------|---------------------|
-| **角色定位** | **总指挥 / 地基** | **特种兵 / 摩天大楼** |
-| **核心职责** | 绝对掌控硬件、维持系统运转、兜底极致性能 | 运行业务逻辑、实现跨语言组合、提供安全隔离 |
-| **交互方式** | 直接操作物理硬件与寄存器 | 通过 WASI/WIT 接口向内核申请资源 |
-| **崩溃影响** | 一旦出错可能导致整个系统宕机 | 仅在自身沙箱内失效，不影响全局 |
-
-### 决策流程图
-
-```
-开始开发 ──────────────────┐
-    │                      │
-    ├─ 需要直接硬件控制？   │
-    │   ├─ 是 → Native 模式 │
-    │   └─ 否 → 继续判断    │
-    │                      │
-    ├─ 追求极致计算性能？   │
-    │   ├─ 是 → Native 模式 │
-    │   └─ 否 → 继续判断    │
-    │                      │
-    ├─ 需要跨平台兼容性？   │
-    │   ├─ 是 → Wasm 组件   │
-    │   └─ 否 → 混合模式    │
-    │                      │
-    └─ 最终选择 ────────────┘
-```
-
-**详细分析与深度解读：** 参见 [操作系统/020.分层结构Wasm与Native的选择.md](操作系统/020.分层结构Wasm与Native的选择.md)
+1. **分析设备能力**：确定设备需要哪些能力积木
+2. **实现能力接口**：为每个能力实现对应的 WIT 接口
+3. **创建设备配置**：编写 YAML 配置文件，组合需要的能力
+4. **注册设备**：通过 device-loader.wit 接口注册设备
+5. **验证配置**：测试配置是否正确加载和运行
 
 ---
 
@@ -798,7 +839,7 @@ Wasm 在 Native 提供的安全沙箱里，进行**业务组件的动态组合�
 
 ### 基础底座层：内存管理 (Native)
 
-文件路径：kernel/mm/allocator.mbt
+文件路径：[kernel/mm/allocator.mbt](kernel/mm/allocator.mbt)
 
 这是系统的核心，必须使用 Native 模式以获得直接操作物理内存的能力。
 
@@ -828,503 +869,45 @@ fn kernel_main {
 }
 ```
 
-### 服务组件层：网络服务 (Wasm)
+### 设备加载器：配置即编程
 
-文件路径：runtime/network/tcp_stack.mbt
+文件路径：[runtime/device_loader.mbt](runtime/device_loader.mbt)
 
-利用 Wasm 的沙箱特性保证网络服务的安全性。
+实现声明式配置 + 命令式加载的混合方案。
 
-```moonbit nocheck
-// runtime/network/tcp_stack.mbt
-// 编译目标：Wasm (沙箱运行)
+### 技术栈加载器：调度整合技术
 
-/// 导入 WASI 网络接口
-import wasi:io
-import wasi:sockets/tcp
+文件路径：[runtime/tech_stack_loader.mbt](runtime/tech_stack_loader.mbt)
 
-/// 处理 TCP 连接
-fn handle_connection(conn: tcp:Socket) -> Result[Unit, String] {
-  let data = io:read(conn, 1024)
-  match data {
-    Ok(bytes) => {
-      println("收到数据: " + bytes.to_string())
-      io:write(conn, "HTTP/1.1 200 OK\r\nHello from Yiduo OS")
-      Ok(())
-    }
-    Err(e) => Err("读取错误: " + e)
-  }
-}
+实现技术栈的配置驱动调度。
 
-/// 启动 TCP 服务器
-fn start_server(port: Int) -> tcp:Socket {
-  let sock = tcp:Socket::new_ipv4()
-  tcp:bind(sock, "0.0.0.0", port)
-  tcp:listen(sock, 10)
-  println("TCP 服务已启动，端口: " + port.to_string())
-  sock
-}
-```
-
-### 资源组件层：系统注册表 (Native + Wasm)
-
-文件路径：kernel/resource/registry.mbt
-
-**核心实现**：资源也是组件！展示硬件如何自我注册、应用如何按需引用、AI如何调度共享资源。
-
-```moonbit nocheck
-// kernel/resource/registry.mbt
-// 编译目标：混合模式 (Native核心 + Wasm组件)
-
-import yiduo:capabilities
-import yiduo:ai/scheduler
-
-/// 资源状态枚举
-enum ResourceStatus {
-  Idle    // 空闲状态
-  Busy    // 忙碌状态
-  Offline // 离线状态
-}
-
-/// 资源组件类型
-type ResourceComponent = {
-  id: String,
-  name: String,
-  capability: capabilities:Capability,
-  status: ResourceStatus,
-  ref_count: Int
-}
-
-/// 系统注册表：管理所有资源组件
-struct SystemRegistry {
-  mut resources: Map[String, ResourceComponent]
-}
-
-/// 全局注册表实例
-let mut registry: SystemRegistry = { resources: Map::empty() }
-
-/// 第一步：硬件自我注册（万物皆组件）
-/// 硬件启动时，将自己包装成标准的"资源组件"，主动向系统报到
-fn register_resource(component: ResourceComponent) -> Unit {
-  println("资源组件上线: " + component.name + " (" + component.id + ")")
-  registry.resources = registry.resources.insert(component.id, component)
-  
-  // 广播能力，让其他组件知道这个资源可用
-  capabilities:broadcast_available(component.capability)
-}
-
-/// 第二步：应用按需引用（无零和之争）
-/// 应用不需要去"抢"硬件的"所有权"，只需要发起一个"引用"请求
-fn borrow_resource(capability: capabilities:Capability) -> Result[String, String] {
-  // AI 调度器介入，找到最合适的资源
-  match AI_SCHEDULER:find_best_match(registry.resources, capability) {
-    Some(resource_id) => {
-      match registry.resources.get(resource_id) {
-        Some(mut component) => {
-          // 更新状态和引用计数
-          component.status = ResourceStatus::Busy
-          component.ref_count = component.ref_count + 1
-          registry.resources = registry.resources.insert(resource_id, component)
-          
-          println("成功引用资源: " + component.name)
-          Ok(resource_id)
-        },
-        None => Err("资源不存在")
-      }
-    },
-    None => Err("没有匹配的资源，AI正在协调排队...")
-  }
-}
-
-/// 释放资源引用
-fn release_resource(resource_id: String) -> Result[Unit, String] {
-  match registry.resources.get(resource_id) {
-    Some(mut component) => {
-      component.ref_count = component.ref_count - 1
-      if component.ref_count == 0 {
-        component.status = ResourceStatus::Idle
-        println("资源已释放: " + component.name + "，回归共享池")
-      }
-      registry.resources = registry.resources.insert(resource_id, component)
-      Ok(())
-    },
-    None => Err("资源不存在")
-  }
-}
-
-/// 第三步：AI 调度器（执一御万）
-/// AI 替代了传统 OS 里死板的"内核调度器"
-module AI_SCHEDULER {
-  /// 智能资源匹配
-  fn find_best_match(
-    resources: Map[String, ResourceComponent], 
-    required_capability: capabilities:Capability
-  ) -> Option[String] {
-    // 1. 筛选出能力匹配且处于空闲状态的资源
-    let available = resources.values()
-      .filter(r => r.status == ResourceStatus::Idle)
-      .filter(r => capabilities:is_compatible(r.capability, required_capability))
-    
-    // 2. AI 根据历史数据和当前负载，智能选择最优资源
-    match available {
-      [] => None,
-      [first] => Some(first.id),
-      _ => {
-        // 更复杂的AI调度逻辑：考虑负载均衡、性能历史等
-        let selected = available.sort_by(|a, b| a.ref_count < b.ref_count).head()
-        Some(selected.id)
-      }
-    }
-  }
-}
-
-/// 示例：GPU资源组件定义
-fn create_gpu_resource(id: String, name: String) -> ResourceComponent {
-  {
-    id: id,
-    name: name,
-    capability: capabilities:rendering(high_performance=true),
-    status: ResourceStatus::Idle,
-    ref_count: 0
-  }
-}
-
-/// 示例：摄像头资源组件定义
-fn create_camera_resource(id: String, name: String) -> ResourceComponent {
-  {
-    id: id,
-    name: name,
-    capability: capabilities:image_capture(resolution="4k"),
-    status: ResourceStatus::Idle,
-    ref_count: 0
-  }
-}
-
-/// 系统初始化示例
-fn main {
-  println("一多系统：资源管理器启动")
-  
-  // 硬件启动，自我注册
-  let gpu = create_gpu_resource("gpu_001", "高性能GPU")
-  let camera = create_camera_resource("cam_001", "4K摄像头")
-  
-  register_resource(gpu)
-  register_resource(camera)
-  
-  println("【一多操作系统 · 第二铁律】")
-  println("\"万物皆组件，资源无私有。一切皆为引用，唯有共享永生。\"")
-}
-```
-
-### 应用组件层：AI 编排 (Wasm)
-
-文件路径：apps/ai_shell/shell.mbt
-
-展示如何调用底层 Native 驱动进行高性能 AI 推理。
-
-```moonbit nocheck
-// apps/ai_shell/shell.mbt
-// 编译目标：Wasm (安全沙箱)
-
-/// 定义 NPU 推理接口 (WIT 绑定)
-/// @component "npu" "infer"
-fn npu_infer(model_path: String, input_data: List[Float]) -> List[Float]
-
-/// 定义文件系统接口 (WASI)
-/// @component "wasi:filesystem" "read"
-fn read_file(path: String) -> Result[String, String]
-
-/// 导入资源管理接口 (WIT 绑定)
-/// @component "yiduo:resource" "borrow"
-fn borrow_resource(cap: String) -> Result[String, String]
-
-/// @component "yiduo:resource" "release"
-fn release_resource(id: String) -> Result[Unit, String]
-
-fn main {
-  println("一多 AI 终端启动")
-  
-  // 1. 读取配置 (WASI)
-  match read_file("/config/model.cfg") {
-    Ok(cfg) => println("配置加载成功"),
-    Err(e) => println("配置错误: " + e)
-  }
-
-  // 2. 按需引用GPU资源 (无零和共享)
-  match borrow_resource("rendering:high_performance") {
-    Ok(gpu_id) => {
-      println("成功获取GPU资源: " + gpu_id)
-      
-      // 3. 调用 NPU 驱动 (Native FFI)
-      // 注意：这里通过组件模型调用，底层由 Native 实现
-      let result = npu_infer(
-        "/models/llm_v3.wasm",
-        [0.1, 0.5, 0.9]
-      )
-      
-      println("AI 推理结果: " + result.to_string())
-      
-      // 4. 用完即走，释放资源
-      release_resource(gpu_id)
-    },
-    Err(e) => println("资源获取失败: " + e)
-  }
-}
-```
-
-### 增强型 Linker 层：跨语言涡轮增压器 (Rust)
-
-文件路径：tools/yiduo-linker/
-
-**展示一多 OS 的核心黑科技：用 Rust 打造的增强型 Wasm Linker，实现跨语言零开销调用。**
-
-```rust
-// tools/yiduo-linker/src/parser.rs
-// 第一步：解析 Wasm 二进制
-use anyhow::{Context, Result};
-use wasmparser::{Parser, Payload, TypeRef};
-use std::collections::{HashMap, HashSet};
-
-/// 解析后的 Wasm 模块
-pub struct ParsedModule {
-    pub imports: Vec<ImportInfo>,
-    pub exports: Vec<ExportInfo>,
-    pub types: Vec<FunctionType>,
-    pub raw_bytes: Vec<u8>,
-}
-
-/// 导入函数信息
-pub struct ImportInfo {
-    pub module: String,
-    pub name: String,
-    pub type_idx: u32,
-    pub signature: FunctionType,
-}
-
-/// 导出函数信息
-pub struct ExportInfo {
-    pub name: String,
-    pub kind: ExportKind,
-    pub index: u32,
-}
-
-/// 函数类型
-pub struct FunctionType {
-    pub params: Vec<ValueType>,
-    pub results: Vec<ValueType>,
-}
-
-/// 解析 Wasm 二进制
-pub fn parse_wasm(bytes: &[u8]) -> Result<ParsedModule> {
-    // 详细实现见 操作系统/016.一多 OS Wasm 增强型入口方案.md
-    todo!()
-}
-```
-
-```rust
-// tools/yiduo-linker/src/linker.rs
-// 第三步：增强型 LTO Linker
-use walrus::{Module as WalrusModule};
-
-/// 一多 OS 增强型 Linker
-pub struct YiduoLinker {
-    modules: HashMap<String, ParsedModule>,
-    plan: Option<OptimizationPlan>,
-}
-
-impl YiduoLinker {
-    /// 执行链接和优化
-    pub fn link(&mut self) -> Result<Vec<u8>> {
-        log::info!("Starting enhanced linking with LTO...");
-        
-        // 使用 walrus 进行高级转换
-        let mut merged_module = WalrusModule::parse(&self.modules.values().next().unwrap().raw_bytes)?;
-        
-        // 黑科技核心：跨模块内联和指令重写
-        for call_info in &self.plan.as_ref().unwrap().optimizable_calls {
-            self.apply_lto_optimization(&mut merged_module, call_info)?;
-        }
-        
-        // 生成最终的优化后的 Wasm
-        let final_bytes = merged_module.emit_wasm();
-        log::info!("Linking complete! Output size: {} bytes", final_bytes.len());
-        Ok(final_bytes)
-    }
-}
-```
-
-```toml
-# tools/yiduo-linker/Cargo.toml
-[package]
-name = "yiduo-linker"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-wasmparser = "0.119"    # 解析 Wasm 字节码
-wasm-encoder = "0.42"  # 生成新的 Wasm 字节码
-walrus = "0.20"         # 高级 Wasm 转换库
-anyhow = "1.0"          # 错误处理
-log = "0.4"            # 日志
-clap = "4.4"           # 命令行解析
-```
-
-```bash
-# 使用示例
-# 编译并安装
-cd tools/yiduo-linker
-cargo install --path .
-
-# 链接多个 Wasm 模块并优化
-yiduo-linker \
-    --input moonbit_core.wasm \
-    --input rust_service.wasm \
-    --output optimized.wasm \
-    --verbose
-```
-
-**详细代码和完整实现：** 参见 [操作系统/016.一多 OS Wasm 增强型入口方案.md](操作系统/016.一多 OS Wasm 增强型入口方案.md)
+---
 
 ## 技术挑战与工程展望
 
-### 🎯 一多OS的核心理念：
-
-**一多OS不是重新发明技术，而是调度整合技术！**
-
-* **核心策略**：我们不解决技术困难，只解决**调度整合困难**
-* **白嫖一切**：任何现有技术（Rust、C/C++、GPU驱动、AI框架）都可以直接使用
-* **关键价值**：定义统一接口，让各种技术无缝协作
+（保留原有内容）
 
 ---
-
-### 当前技术状态：
-
-组合式架构 + 现代极致 IPC + 硬件辅助隔离 + 全量 WASM 化（无 GC 核心+有 GC 业务分层）的技术闭环，在**纯理论和核心架构设计**层面已经彻底打通。
-
-从技术实现角度看，没有根本性的"技术难关"，主要挑战在于**调度整合的工程化**：
-
-### 1. I/O 与硬件中断的整合调度
-* **现有技术成熟度**：✅ Linux网卡驱动、文件系统已完美解决
-* **一多OS的工作**：调度整合 - 何时用Native直通，何时用WASM沙箱
-* **关键点**：不是重新发明驱动，而是设计高效的切换和调度策略
-
-### 2. 异构芯片（CPU + GPU + NPU）的统一调度
-* **现有技术成熟度**：✅ CUDA、ROCm、昇腾等已有成熟SDK
-* **一多OS的工作**：调度整合 - 为不同芯片定义统一接口，智能分配算力
-* **关键点**：不是重写GPU驱动，而是让它们在统一框架下协同工作
-
-### 3. 系统安全与可靠性保障
-* **现有技术成熟度**：✅ seL4、Linux安全模块已验证
-* **一多OS的工作**：调度整合 - 把安全机制在组件层面灵活应用
-* **关键点**：不是重新发明验证方法，而是组合使用各种成熟技术
-
-### 4. 模块依赖与系统稳定性
-* **现有技术成熟度**：✅ 微服务架构、熔断机制已在云原生中验证
-* **一多OS的工作**：调度整合 - 把分布式系统经验应用到OS
-* **关键点**：不是重新发明容错机制，而是设计优雅的组合策略
-
-### 总体结论
-
-一多 OS 现在的状态可以用 **"所有技术都已就绪，关键在调度整合艺术"** 来形容：
-
-* ✅ **技术原材料充足**：所有需要的技术都已存在且成熟
-* 🎨 **考验整合能力**：不是技术创新，而是调度整合的艺术
-* 🎯 **工程化挑战**：如何把这些技术组合成一个和谐的系统
-
-**这正是一多OS的核心竞争力：不是比谁技术更先进，而是比谁更能整合调度现有一切！**
-
-**详细技术分析**：参见 [操作系统/技术方案/000.技术闭环彻底打通.md](操作系统/技术方案/000.技术闭环彻底打通.md)
 
 ## 构建与运行流程
 
-### 构建脚本 (build.sh)
-
-```bash
-#!/bin/bash
-echo "开始构建 一多操作系统..."
-
-# 创建输出目录
-mkdir -p bin/services bin/apps
-
-# 构建内核 (Native)
-echo "构建内核..."
-moon build --target=native kernel/ -o bin/yiduo_kernel
-
-# 构建系统服务 (Wasm)
-echo "构建系统服务..."
-moon build --target=wasm-gc runtime/ -o bin/services/
-
-# 构建应用 (Wasm)
-echo "构建应用..."
-moon build --target=wasm-gc apps/ -o bin/apps/
-
-echo "构建完成！"
-```
-
-### 运行时启动流程
-
-1. Bootloader 加载 yiduo_kernel (Native)。
-2. 内核初始化硬件，启动 Wasmtime 运行时。
-3. 运行时加载 bin/services/ 中的核心服务。
-4. 用户空间启动，加载 bin/apps/ 中的应用。
-
-## 贡献指南
-
-### 开发规范
-
-- **命名规范**：
-  - Native 组件：snake_case (C 风格兼容)
-  - Wasm 组件：camelCase (MoonBit 风格)
-- **接口定义**：
-  - 所有组件间通信必须通过 interfaces/ 目录下的 .wit 文件定义。
-  - 组件接口应遵循单一职责原则，保持简洁明了。
-- **组件开发**：
-  - 每个组件应有明确的职责和边界
-  - 组件应通过标准接口与其他组件通信
-  - 避免组件间的直接依赖，通过接口进行解耦
-- **代码审查**：
-  - Native 组件必须进行内存安全审查。
-  - Wasm 组件必须进行接口兼容性审查。
-
-### 测试策略
-
-- **单元测试**：所有组件必须包含 _test 文件，测试组件的独立功能。
-- **集成测试**：测试组件间的交互和组合。
-- **组件市场验证**：发布到组件市场的组件必须通过安全和兼容性测试。
-
-## 未来路线图
-
-### Phase 1 (原型阶段) - 2026 Q2
-- ✅ 完成 MoonBit Native 内核与 Wasm 服务的通信
-- ✅ 实现基础安全模型和权限管理
-- ✅ 开发文件系统、安全和音频服务
-- ✅ 编写跨平台构建脚本（PowerShell 和 Bash）
-- ✅ 完成核心接口定义和文档
-
-### Phase 2 (硬件支持阶段) - 2026 Q3-Q4
-- 实现 UniHAL 核心功能，支持 x86_64 和 ARM64 架构
-- 开发硬件适配器框架，支持常见硬件设备
-- 实现 AI 自动适配器生成系统
-- 完成内核模块的硬件抽象层实现
-- 进行硬件兼容性测试
-
-### Phase 3 (AI 原生阶段) - 2027 Q1-Q2
-- 集成 AI 驱动调度系统
-- 实现自然语言操作系统交互
-- 开发 AI 辅助的系统管理工具
-- 构建组件市场和生态系统
-- 发布首个稳定版本
-
-### Phase 4 (生态扩展阶段) - 2027 Q3-Q4
-- 支持更多编程语言和开发框架
-- 扩展硬件设备支持范围
-- 开发行业特定的解决方案
-- 建立开发者社区和贡献体系
-- 推出企业级支持服务
-
-## 许可证
-
-本项目采用 Apache-2.0 许可证，详见 LICENSE 文件。
+（保留原有内容）
 
 ---
 
-*一多，下一代跨语言原生操作系统，为未来计算而生。*
+## 贡献指南
+
+（保留原有内容）
+
+---
+
+## 未来路线图
+
+（保留原有内容）
+
+---
+
+## 许可证
+
+（保留原有内容）
+

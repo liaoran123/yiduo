@@ -1,0 +1,244 @@
+// 内存管理接口
+
+use base.types.{result, option}
+use base.error.{Error}
+
+package yiduo:env;
+
+/// 内存块 ID
+type memory_id = u64;
+
+/// 内存保护标志
+enum memory_prot {
+    None,
+    Read,
+    Write,
+    Exec,
+    ReadWrite,
+    ReadExec,
+    All,
+}
+
+/// 内存映射标志
+enum memory_flags {
+    Private,
+    Shared,
+    Anonymous,
+    Fixed,
+    Populate,
+}
+
+/// 内存区域信息
+record memory_region {
+    start: u64,
+    end: u64,
+    prot: memory_prot,
+    flags: memory_flags,
+    offset: u64,
+    path: option<string>,
+    size: u64,
+}
+
+/// 系统内存信息
+record system_memory_info {
+    total: u64,
+    available: u64,
+    used: u64,
+    free: u64,
+    buffers: u64,
+    cached: u64,
+    swap_total: u64,
+    swap_used: u64,
+    swap_free: u64,
+    page_size: u32,
+}
+
+/// 进程内存信息
+record process_memory_info {
+    rss: u64,       // 常驻内存大小
+    vms: u64,       // 虚拟内存大小
+    shared: u64,    // 共享内存大小
+    text: u64,      // 代码段大小
+    data: u64,      // 数据段大小
+    stack: u64,     // 栈大小
+    heap: u64,      // 堆大小
+    locked: u64,    // 锁定内存大小
+}
+
+/// 内存分配参数
+record memory_alloc_params {
+    size: u64,
+    alignment: option<u32>,
+    prot: option<memory_prot>,
+    flags: option<memory_flags>,
+    numa_node: option<u32>,
+}
+
+/// 内存池配置
+record memory_pool_config {
+    name: string,
+    initial_size: u64,
+    max_size: u64,
+    block_size: u32,
+    prot: memory_prot,
+}
+
+/// 内存资源
+resource memory_handle {
+    /// 获取内存信息
+    get_info: func() -> result<memory_region, Error>
+
+    /// 读取内存
+    read: func(offset: u64, len: u32) -> result<list<u8>, Error>
+
+    /// 写入内存
+    write: func(offset: u64, data: list<u8>) -> result<u32, Error>
+
+    /// 设置内存保护
+    set_protection: func(prot: memory_prot) -> result<unit, Error>
+
+    /// 锁定内存（防止被交换出去）
+    lock: func() -> result<unit, Error>
+
+    /// 解锁内存
+    unlock: func() -> result<unit, Error>
+
+    /// 同步内存到磁盘（仅用于映射文件）
+    sync: func(async: bool) -> result<unit, Error>
+
+    /// 缩小内存区域
+    resize: func(new_size: u64) -> result<unit, Error>
+
+    /// 释放内存
+    free: func() -> result<unit, Error>
+
+    /// 关闭内存句柄
+    close: func() -> result<unit, Error>
+}
+
+/// 内存池资源
+resource memory_pool {
+    /// 从池中分配内存
+    alloc: func(size: u64) -> result<memory_handle, Error>
+
+    /// 获取池的状态信息
+    get_info: func() -> result<memory_pool_config, Error>
+
+    /// 获取池的使用统计
+    get_stats: func() -> result<record {
+        allocated: u64,
+        used: u64,
+        available: u64,
+        block_count: u32,
+    }, Error>
+
+    /// 清理池中的空闲块
+    compact: func() -> result<unit, Error>
+
+    /// 销毁池
+    destroy: func() -> result<unit, Error>
+
+    /// 关闭池句柄
+    close: func() -> result<unit, Error>
+}
+
+/// 内存管理接口
+interface memory {
+    /// 获取系统内存信息
+    get_system_info: func() -> result<system_memory_info, Error>
+
+    /// 获取当前进程内存信息
+    get_process_info: func() -> result<process_memory_info, Error>
+
+    /// 获取指定进程内存信息
+    get_process_info_by_pid: func(pid: u32) -> result<process_memory_info, Error>
+
+    /// 枚举当前进程的所有内存区域
+    enumerate_regions: func() -> result<list<memory_region>, Error>
+
+    /// 枚举指定进程的所有内存区域
+    enumerate_regions_by_pid: func(pid: u32) -> result<list<memory_region>, Error>
+
+    /// 分配内存
+    alloc: func(params: memory_alloc_params) -> result<memory_handle, Error>
+
+    /// 重新分配内存（改变大小）
+    realloc: func(mem: memory_handle, new_size: u64) -> result<memory_handle, Error>
+
+    /// 分配对齐的内存
+    alloc_aligned: func(size: u64, alignment: u32) -> result<memory_handle, Error>
+
+    /// 映射文件到内存
+    mmap: func(
+        path: string,
+        offset: u64,
+        len: u64,
+        prot: memory_prot,
+        flags: memory_flags
+    ) -> result<memory_handle, Error>
+
+    /// 创建匿名映射
+    mmap_anonymous: func(
+        len: u64,
+        prot: memory_prot,
+        flags: memory_flags
+    ) -> result<memory_handle, Error>
+
+    /// 创建内存池
+    create_pool: func(config: memory_pool_config) -> result<memory_pool, Error>
+
+    /// 打开已存在的内存池
+    open_pool: func(name: string) -> result<memory_pool, Error>
+
+    /// 删除内存池
+    delete_pool: func(name: string) -> result<unit, Error>
+
+    /// 复制内存
+    memcpy: func(
+        dst: memory_handle,
+        dst_offset: u64,
+        src: memory_handle,
+        src_offset: u64,
+        len: u64
+    ) -> result<unit, Error>
+
+    /// 设置内存（用值填充）
+    memset: func(
+        mem: memory_handle,
+        offset: u64,
+        value: u8,
+        len: u64
+    ) -> result<unit, Error>
+
+    /// 比较内存
+    memcmp: func(
+        mem1: memory_handle,
+        offset1: u64,
+        mem2: memory_handle,
+        offset2: u64,
+        len: u64
+    ) -> result<i32, Error>
+
+    /// 释放所有缓存
+    drop_caches: func() -> result<unit, Error>
+
+    /// 交换指定内存到磁盘
+    swap_out: func(mem: memory_handle) -> result<unit, Error>
+
+    /// 从磁盘换回内存
+    swap_in: func(mem: memory_handle) -> result<unit, Error>
+
+    /// 设置系统内存使用策略
+    set_policy: func(policy: string) -> result<unit, Error>
+
+    /// 获取系统内存使用策略
+    get_policy: func() -> result<string, Error>
+
+    /// 建议系统预读取指定内存区域（提高性能）
+    advise: func(mem: memory_handle, advice: string) -> result<unit, Error>
+}
+
+// 内存管理世界
+world memory {
+  import memory
+}

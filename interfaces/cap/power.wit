@@ -1,0 +1,105 @@
+// 电源管理硬件接口
+
+use base.types.{result, option}
+use base.error.{Error}
+use yiduo:capabilities.{diagnostics, firmware_update}
+
+package yiduo:unihal;
+
+/// 电源状态枚举
+enum power_status {
+    Online,        // 外部供电
+    Battery,       // 电池供电
+    LowPower,      // 低电量警告
+    Critical,      // 电量危急
+    Unknown,       // 未知状态
+}
+
+/// 电源源枚举
+enum power_source {
+    Ac,            // 交流电源
+    Usb,           // USB供电
+    Battery,       // 电池
+    Wireless,      // 无线充电
+}
+
+/// 电池信息
+record battery_info {
+    present: bool,                  // 电池是否存在
+    level: u8,                      // 电量百分比 (0-100)
+    voltage: f32,                   // 电压 (V)
+    temperature: option<f32>,       // 温度 (℃, 可选)
+    status: power_status,
+    charging: bool,                 // 是否在充电
+    cycle_count: option<u32>,       // 循环次数 (可选)
+    design_capacity: option<u32>,   // 设计容量 (mAh, 可选)
+    full_capacity: option<u32>,     // 满电容量 (mAh, 可选)
+}
+
+/// 功耗统计
+record power_stats {
+    current_consumption: u32,   // 当前功耗 (mW)
+    avg_consumption: u32,       // 平均功耗 (mW)
+    uptime_seconds: u64,        // 上电时间
+    on_battery_seconds: u64,    // 电池供电时间
+}
+
+/// 低功耗模式枚举
+enum low_power_mode {
+    Normal,           // 正常模式
+    Light,            // 轻度节电
+    Deep,             // 深度节电
+    Ultra,            // 超省电
+}
+
+/// 电源管理设备资源
+resource power_device {
+    /// 获取电源源信息
+    get_power_source: func() -> result<power_source, Error>
+
+    /// 获取电池信息
+    get_battery_info: func() -> result<battery_info, Error>
+
+    /// 获取功耗统计
+    get_power_stats: func() -> result<power_stats, Error>
+
+    /// 设置低功耗模式
+    set_low_power_mode: func(mode: low_power_mode) -> result<unit, Error>
+
+    /// 获取当前低功耗模式
+    get_low_power_mode: func() -> result<low_power_mode, Error>
+
+    /// 立即进入睡眠/待机模式
+    enter_sleep: func() -> result<unit, Error>
+
+    /// 重启设备
+    reset: func() -> result<unit, Error>
+
+    /// 关闭设备
+    shutdown: func() -> result<unit, Error>
+
+    /// 获取设备信息
+    get_info: func() -> result<record {
+        vendor_id: u32,
+        device_id: u32,
+        model: string,
+    }, Error>
+
+    /// 关闭电源管理设备
+    close: func() -> result<unit, Error>
+
+    // 组合能力模块
+    diagnostics: diagnostics
+    firmware_update: firmware_update
+}
+
+/// 电源管理能力接口
+interface power {
+    /// 打开电源管理设备
+    open: func() -> result<power_device, Error>
+}
+
+// 电源管理设备世界
+world power {
+  import power
+}

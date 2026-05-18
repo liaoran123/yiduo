@@ -1,0 +1,154 @@
+// USB 硬件接口
+
+use base.types.{result, option}
+use base.error.{Error}
+use yiduo:capabilities.{power_saving, diagnostics, firmware_update}
+
+package yiduo:unihal;
+
+/// USB 速度枚举
+enum usb_speed {
+    Low,       // 1.5 Mbps
+    Full,      // 12 Mbps
+    High,      // 480 Mbps
+    Super,     // 5 Gbps
+    SuperPlus, // 10 Gbps+
+}
+
+/// USB 设备类别
+enum usb_class {
+    Audio,
+    Comm,
+    Hid,
+    MassStorage,
+    Video,
+    Hub,
+    VendorSpecific,
+    Other,
+}
+
+/// USB 端点方向
+enum endpoint_dir {
+    Out,  // Host -> Device
+    In,   // Device -> Host
+}
+
+/// USB 端点类型
+enum endpoint_type {
+    Control,
+    Isochronous,
+    Bulk,
+    Interrupt,
+}
+
+/// USB 端点描述
+record usb_endpoint {
+    address: u8,
+    dir: endpoint_dir,
+    ep_type: endpoint_type,
+    max_packet_size: u16,
+    interval: u8,
+}
+
+/// USB 设备信息
+record usb_device_info {
+    vendor_id: u16,
+    product_id: u16,
+    device_class: usb_class,
+    device_subclass: u8,
+    device_protocol: u8,
+    max_packet_size: u8,
+    speed: usb_speed,
+    manufacturer: option<string>,
+    product: option<string>,
+    serial_number: option<string>,
+}
+
+/// USB 设备资源
+resource usb_device {
+    /// 获取设备信息
+    get_device_info: func() -> result<usb_device_info, Error>
+
+    /// 打开设备
+    open: func() -> result<unit, Error>
+
+    /// 关闭设备
+    close: func() -> result<unit, Error>
+
+    /// 发送控制请求
+    control_transfer: func(
+        request_type: u8,
+        request: u8,
+        value: u16,
+        index: u16,
+        data: list<u8>,
+        timeout: u32
+    ) -> result<list<u8>, Error>
+
+    /// 批量传输
+    bulk_transfer: func(
+        endpoint: u8,
+        data: list<u8>,
+        timeout: u32
+    ) -> result<list<u8>, Error>
+
+    /// 中断传输
+    interrupt_transfer: func(
+        endpoint: u8,
+        data: list<u8>,
+        timeout: u32
+    ) -> result<list<u8>, Error>
+
+    /// 等时传输
+    isochronous_transfer: func(
+        endpoint: u8,
+        data: list<u8>,
+        timeout: u32
+    ) -> result<list<u8>, Error>
+
+    /// 重置设备
+    reset: func() -> result<unit, Error>
+
+    /// 设置配置
+    set_configuration: func(config: u8) -> result<unit, Error>
+
+    /// 获取当前配置
+    get_configuration: func() -> result<u8, Error>
+
+    /// 声明接口
+    claim_interface: func(interface_num: u8) -> result<unit, Error>
+
+    /// 释放接口
+    release_interface: func(interface_num: u8) -> result<unit, Error>
+
+    /// 设置替代接口
+    set_alt_interface: func(interface_num: u8, alt_setting: u8) -> result<unit, Error>
+
+    /// 获取端点列表
+    get_endpoints: func(interface_num: u8) -> result<list<usb_endpoint>, Error>
+
+    /// 获取字符串描述符
+    get_string_descriptor: func(index: u8, lang_id: u16) -> result<string, Error>
+
+    // 组合能力模块
+    power_saving: power_saving
+    diagnostics: diagnostics
+    firmware_update: firmware_update
+}
+
+/// USB 主机控制器能力接口
+interface usb {
+    /// 枚举连接的设备
+    enumerate_devices: func() -> result<list<usb_device_info>, Error>
+
+    /// 打开指定设备
+    open_device: func(vendor_id: u16, product_id: u16, serial: option<string>) -> result<usb_device, Error>
+
+    /// 打开指定设备（按索引）
+    open_device_by_index: func(index: u32) -> result<usb_device, Error>
+}
+
+// USB 主机控制器世界
+world usb {
+  import usb
+}

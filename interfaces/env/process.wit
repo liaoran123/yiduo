@@ -1,0 +1,180 @@
+// 进程管理接口
+
+use base.types.{result, option}
+use base.error.{Error}
+
+package yiduo:env;
+
+/// 进程 ID
+type pid = u32;
+
+/// 进程状态
+enum process_status {
+    Running,
+    Sleeping,
+    Stopped,
+    Zombie,
+    Unknown,
+}
+
+/// 进程优先级
+enum process_priority {
+    Idle,
+    Low,
+    Normal,
+    High,
+    Realtime,
+}
+
+/// 进程信息
+record process_info {
+    pid: pid,
+    ppid: option<pid>,  // 父进程 ID
+    name: string,
+    cmdline: string,
+    status: process_status,
+    priority: process_priority,
+    nice: i32,
+    user_id: u32,
+    group_id: u32,
+    start_time: u64,  // 启动时间戳
+    cpu_time: u64,  // CPU 时间（毫秒）
+    memory_usage: u64,  // 内存使用量（字节）
+    threads: u32,  // 线程数
+    fds: u32,  // 文件描述符数
+    cwd: string,  // 当前工作目录
+}
+
+/// 进程资源限制
+record process_limits {
+    max_memory: option<u64>,
+    max_cpu_time: option<u64>,
+    max_fds: option<u32>,
+    max_threads: option<u32>,
+    max_open_files: option<u32>,
+}
+
+/// 进程创建参数
+record process_create_params {
+    program: string,
+    args: list<string>,
+    env: list<string>,  // 环境变量
+    cwd: option<string>,
+    stdin: option<pid>,  // 重定向到指定进程的输入
+    stdout: option<pid>,  // 重定向到指定进程的输出
+    stderr: option<pid>,  // 重定向到指定进程的错误
+    limits: option<process_limits>,
+    priority: option<process_priority>,
+    nice: option<i32>,
+    detached: bool,  // 是否以守护进程方式启动
+}
+
+/// 信号类型
+enum signal_type {
+    Term,  // 终止进程
+    Kill,  // 强制终止
+    Stop,  // 暂停进程
+    Cont,  // 继续进程
+    Int,   // 中断
+    Hup,   // 挂起
+    Usr1,  // 用户定义信号 1
+    Usr2,  // 用户定义信号 2
+}
+
+/// 进程资源
+resource process_handle {
+    /// 获取进程信息
+    get_info: func() -> result<process_info, Error>
+
+    /// 获取进程状态
+    get_status: func() -> result<process_status, Error>
+
+    /// 发送信号到进程
+    send_signal: func(signal: signal_type) -> result<unit, Error>
+
+    /// 等待进程结束
+    wait: func(timeout: option<u32>) -> result<u32, Error>
+
+    /// 杀死进程
+    kill: func() -> result<unit, Error>
+
+    /// 暂停进程
+    stop: func() -> result<unit, Error>
+
+    /// 继续进程
+    continue: func() -> result<unit, Error>
+
+    /// 设置进程优先级
+    set_priority: func(priority: process_priority) -> result<unit, Error>
+
+    /// 设置进程 nice 值
+    set_nice: func(nice: i32) -> result<unit, Error>
+
+    /// 获取进程资源限制
+    get_limits: func() -> result<process_limits, Error>
+
+    /// 设置进程资源限制
+    set_limits: func(limits: process_limits) -> result<unit, Error>
+
+    /// 读取进程标准输出
+    read_stdout: func(len: u32, timeout: option<u32>) -> result<list<u8>, Error>
+
+    /// 读取进程标准错误
+    read_stderr: func(len: u32, timeout: option<u32>) -> result<list<u8>, Error>
+
+    /// 写入进程标准输入
+    write_stdin: func(data: list<u8>) -> result<u32, Error>
+
+    /// 关闭进程标准输入
+    close_stdin: func() -> result<unit, Error>
+
+    /// 关闭进程句柄
+    close: func() -> result<unit, Error>
+}
+
+/// 进程管理接口
+interface process {
+    /// 创建新进程
+    create: func(params: process_create_params) -> result<process_handle, Error>
+
+    /// 打开现有进程
+    open: func(pid: pid) -> result<process_handle, Error>
+
+    /// 获取当前进程 ID
+    self: func() -> result<pid, Error>
+
+    /// 获取当前进程信息
+    get_self_info: func() -> result<process_info, Error>
+
+    /// 枚举所有进程
+    enumerate: func() -> result<list<process_info>, Error>
+
+    /// 根据名称查找进程
+    find_by_name: func(name: string) -> result<list<process_info>, Error>
+
+    /// 发送信号到指定进程
+    send_signal_by_pid: func(pid: pid, signal: signal_type) -> result<unit, Error>
+
+    /// 杀死指定进程
+    kill_by_pid: func(pid: pid) -> result<unit, Error>
+
+    /// 暂停指定进程
+    stop_by_pid: func(pid: pid) -> result<unit, Error>
+
+    /// 继续指定进程
+    continue_by_pid: func(pid: pid) -> result<unit, Error>
+
+    /// 等待指定进程结束
+    wait_by_pid: func(pid: pid, timeout: option<u32>) -> result<u32, Error>
+
+    /// 睡眠当前进程指定时间
+    sleep: func(ms: u32) -> result<unit, Error>
+
+    /// 退出当前进程
+    exit: func(exit_code: u32) -> result<unit, Error>
+}
+
+// 进程管理世界
+world process {
+  import process
+}

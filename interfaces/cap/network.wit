@@ -1,0 +1,172 @@
+// 网络硬件接口
+
+use base.types.{result, option}
+use base.error.{Error}
+use yiduo:capabilities.{power_saving, diagnostics, firmware_update}
+
+package yiduo:unihal;
+
+/// 网络接口类型
+enum iface_type {
+    Ethernet,
+    Wifi,
+    Bluetooth,
+    Cellular,
+    LoRa,
+    Other,
+}
+
+/// 网络链接状态
+enum link_status {
+    Down,
+    Up,
+    Unknown,
+}
+
+/// 网络链接速度
+record link_speed {
+    tx_mbps: u32,
+    rx_mbps: u32,
+}
+
+/// MAC 地址
+record mac_address {
+    bytes: list<u8>,  // 6 字节
+}
+
+/// IP 地址
+record ip_address {
+    version: u8,  // 4 或 6
+    bytes: list<u8>,  // 4 字节 (v4) 或 16 字节 (v6)
+}
+
+/// 网络接口信息
+record network_iface_info {
+    name: string,
+    iface_type: iface_type,
+    mac_address: mac_address,
+    mtu: u32,
+    link_status: link_status,
+    link_speed: option<link_speed>,
+    ip_addresses: list<ip_address>,
+    subnet_masks: list<ip_address>,
+    gateways: list<ip_address>,
+    dns_servers: list<ip_address>,
+    is_up: bool,
+    is_promiscuous: bool,
+    is_multicast: bool,
+}
+
+/// 网络统计信息
+record network_stats {
+    tx_packets: u64,
+    rx_packets: u64,
+    tx_bytes: u64,
+    rx_bytes: u64,
+    tx_errors: u64,
+    rx_errors: u64,
+    tx_dropped: u64,
+    rx_dropped: u64,
+    collisions: u64,
+}
+
+/// Wifi 接入点信息
+record wifi_ap_info {
+    ssid: string,
+    bssid: mac_address,
+    signal_strength: i32,  // RSSI in dBm
+    channel: u8,
+    frequency: u32,  // MHz
+    security: string,  // WPA2, WPA3, etc.
+    capabilities: list<string>,
+}
+
+/// 网络数据包
+record network_packet {
+    data: list<u8>,
+    timestamp: u64,
+    len: u32,
+}
+
+/// 网络设备资源
+resource network_device {
+    /// 获取接口信息
+    get_iface_info: func() -> result<network_iface_info, Error>
+
+    /// 获取统计信息
+    get_stats: func() -> result<network_stats, Error>
+
+    /// 设置接口状态
+    set_up: func(up: bool) -> result<unit, Error>
+
+    /// 设置 MTU
+    set_mtu: func(mtu: u32) -> result<unit, Error>
+
+    /// 设置 MAC 地址
+    set_mac_address: func(mac: mac_address) -> result<unit, Error>
+
+    /// 设置 IP 地址
+    set_ip_address: func(ip: ip_address, subnet_mask: ip_address, gateway: option<ip_address>) -> result<unit, Error>
+
+    /// 设置 DNS 服务器
+    set_dns_servers: func(servers: list<ip_address>) -> result<unit, Error>
+
+    /// 设置混杂模式
+    set_promiscuous: func(enabled: bool) -> result<unit, Error>
+
+    /// 发送数据包
+    send_packet: func(packet: network_packet) -> result<u32, Error>
+
+    /// 接收数据包
+    receive_packet: func(timeout: u32) -> result<network_packet, Error>
+
+    /// 获取接收到的数据包队列长度
+    get_rx_queue_len: func() -> result<u32, Error>
+
+    /// 刷新接收队列
+    flush_rx_queue: func() -> result<unit, Error>
+
+    // Wifi 特定功能
+    /// 扫描附近的接入点（Wifi专用）
+    wifi_scan: func() -> result<list<wifi_ap_info>, Error>
+
+    /// 连接到指定的 Wifi 接入点
+    wifi_connect: func(ssid: string, password: option<string>) -> result<unit, Error>
+
+    /// 断开 Wifi 连接
+    wifi_disconnect: func() -> result<unit, Error>
+
+    /// 获取当前连接的 Wifi 接入点信息
+    wifi_get_connected_ap: func() -> result<wifi_ap_info, Error>
+
+    /// 重置网络接口
+    reset: func() -> result<unit, Error>
+
+    // 组合能力模块
+    power_saving: power_saving
+    diagnostics: diagnostics
+    firmware_update: firmware_update
+}
+
+/// 网络硬件能力接口
+interface network {
+    /// 枚举所有网络接口
+    enumerate_interfaces: func() -> result<list<network_iface_info>, Error>
+
+    /// 打开指定网络接口
+    open_interface: func(name: string) -> result<network_device, Error>
+
+    /// 打开指定网络接口（按索引）
+    open_interface_by_index: func(index: u32) -> result<network_device, Error>
+
+    /// 创建虚拟网络接口
+    create_virtual_interface: func(name: string, iface_type: iface_type) -> result<network_device, Error>
+
+    /// 删除虚拟网络接口
+    delete_virtual_interface: func(name: string) -> result<unit, Error>
+}
+
+// 网络硬件世界
+world network {
+  import network
+}
