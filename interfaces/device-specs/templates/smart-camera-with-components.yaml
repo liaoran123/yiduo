@@ -1,0 +1,154 @@
+# 一多 OS 智能摄像头设备配置 - Native/Wasm 组件切换示例
+# 这个配置展示了如何为不同的能力组件选择 Native 或 Wasm 实现
+
+device:
+  name: "一多智能摄像头 - 可切换组件版"
+  model: "MULTI-SWITCH-CAM-001"
+  vendor: "一多科技"
+  description: "支持 Native 和 Wasm 组件动态切换的智能摄像头"
+
+  # 全局组件选择策略
+  component-selection:
+    # 全局默认策略：config-driven（配置驱动）
+    default-strategy: "config-driven"
+    # 是否启用性能自适应切换
+    enable-adaptive-switching: true
+    # 自适应切换的性能阈值
+    adaptive-thresholds:
+      max-cpu-usage: 0.8      # CPU 使用率超过 80% 时，切换到 Native
+      max-memory-bytes: 1073741824  # 内存超过 1GB 时，切换到 Wasm（更安全）
+
+  # 能力组件配置
+  capabilities:
+    # 摄像头捕获能力 - 性能优先，强制使用 Native
+    capture:
+      id: "camera-capture"
+      name: "摄像头捕获"
+      version: "1.0.0"
+      
+      # 两种实现都注册，运行时选择
+      implementations:
+        wasm:
+          path: "./components/camera-capture.wasm"
+          sandbox: true
+          priority: 2
+        
+        native:
+          path: "./components/camera-capture.so"
+          priority: 1  # 优先级更高
+      
+      # 首选策略
+      selection-strategy: "prefer-native"
+
+    # 音频输入 - 安全优先，优先使用 Wasm
+    audio-input:
+      id: "audio-input"
+      name: "音频输入"
+      version: "1.0.0"
+      
+      implementations:
+        wasm:
+          path: "./components/audio-input.wasm"
+          sandbox: true
+          priority: 1
+        
+        native:
+          path: "./components/audio-input.so"
+          priority: 2
+      
+      selection-strategy: "prefer-wasm"
+
+    # AI 推理 - 自适应选择
+    ai-inference:
+      id: "ai-inference"
+      name: "AI 推理引擎"
+      version: "1.0.0"
+      
+      implementations:
+        wasm:
+          path: "./components/ai-inference.wasm"
+          sandbox: true
+          priority: 2
+        
+        native:
+          path: "./components/ai-inference.so"
+          priority: 1
+      
+      selection-strategy: "adaptive"
+
+    # 显示输出 - 默认使用配置驱动
+    display:
+      id: "display-output"
+      name: "显示输出"
+      version: "1.0.0"
+      
+      implementations:
+        wasm:
+          path: "./components/display.wasm"
+          sandbox: false  # 显示通常不需要强安全隔离
+          priority: 2
+        
+        native:
+          path: "./components/display.so"
+          priority: 1
+      
+      selection-strategy: "config-driven"
+
+  # 加载选项配置
+  load-options:
+    # 全局默认加载选项
+    global:
+      enable-performance-monitoring: true
+      timeout-ms: 5000
+    
+    # 特定组件的加载选项
+    per-component:
+      camera-capture:
+        enable-performance-monitoring: true
+        timeout-ms: 10000
+      
+      ai-inference:
+        enable-sandbox: false  # AI 推理通常不需要沙箱
+        timeout-ms: 30000
+
+  # 组件依赖关系
+  dependencies:
+    # AI 推理依赖于摄像头捕获
+    ai-inference: ["camera-capture"]
+    
+    # 显示输出可能依赖于 AI 推理
+    display-output: ["ai-inference"]
+
+  # 热切换配置
+  hot-swap:
+    # 启用热切换
+    enabled: true
+    
+    # 切换策略
+    strategy: "graceful"  # graceful（优雅切换）或 immediate（立即切换）
+    
+    # 优雅切换的超时时间
+    graceful-timeout-ms: 3000
+
+  # 监控配置
+  monitoring:
+    # 启用组件监控
+    enabled: true
+    
+    # 采样间隔
+    sample-interval-ms: 1000
+    
+    # 保留历史数据的时长
+    retention-minutes: 60
+
+  # 设备基础属性（保留原有配置）
+  hardware:
+    sensor: "SONY-IMX327"
+    resolution: "1920x1080"
+    fps: 30
+    
+  features:
+    auto-focus: true
+    night-vision: true
+    motion-detection: true
+    audio-recording: true
