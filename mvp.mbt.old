@@ -1,0 +1,183 @@
+/// 一多 OS 四层架构 - 最小可行产品 (MVP)
+/// 演示完整的概念，但简化实现
+
+// ==========================================
+// 第4层: 后端适配器 (Backend Adapters)
+// ==========================================
+
+enum Error {
+    BackendNotAvailable(String),
+    Other(String),
+}
+
+fn Error.to_string(self: Error): String {
+    match self {
+        BackendNotAvailable(msg) => "BackendNotAvailable: " + msg,
+        Other(msg) => "Other: " + msg,
+    }
+}
+
+type Result[T] = T | Error
+
+/// Mock 相机后端
+struct MockCameraBackend {
+    frame_count: Int,
+}
+
+fn MockCameraBackend.new(): MockCameraBackend {
+    { frame_count: 0 }
+}
+
+fn MockCameraBackend.capture(self: MockCameraBackend): String | Error {
+    let new_frame_count = self.frame_count + 1
+    println("[MockCamera] 捕获第 " + new_frame_count.to_string() + " 帧")
+    Ok("Mock 图像数据 (帧: " + new_frame_count.to_string() + ")")
+}
+
+fn MockCameraBackend.get_info(self: MockCameraBackend): String | Error {
+    Ok("Mock 相机设备 (640x480)")
+}
+
+// ==========================================
+// 第3层: 计算细胞 (Compute Cells)
+// ==========================================
+
+/// 相机细胞
+struct CameraCell {
+    backend: MockCameraBackend,
+}
+
+fn CameraCell.new(backend: MockCameraBackend): CameraCell {
+    { backend: backend }
+}
+
+fn CameraCell.capture_image(self: CameraCell): String | Error {
+    println("[CameraCell] 正在捕获图像...")
+    self.backend.capture()
+}
+
+fn CameraCell.get_device_info(self: CameraCell): String | Error {
+    println("[CameraCell] 获取设备信息...")
+    self.backend.get_info()
+}
+
+// ==========================================
+// 第2层: 调度整合 (Scheduler)
+// ==========================================
+
+/// 简单的后端选择策略
+enum BackendStrategy {
+    PreferMock,
+}
+
+/// 后端选择器
+struct BackendSelector {
+    current_backend: Option[MockCameraBackend],
+}
+
+fn BackendSelector.new(): BackendSelector {
+    { current_backend: None }
+}
+
+fn BackendSelector.select_backend(self: BackendSelector, strategy: BackendStrategy): MockCameraBackend | Error {
+    match strategy {
+        PreferMock => {
+            Ok(MockCameraBackend.new())
+        }
+    }
+}
+
+// ==========================================
+// 第1层: 细胞组合配置 (App Scenarios)
+// ==========================================
+
+/// 应用场景配置
+struct AppScenario {
+    name: String,
+    description: String,
+    cells: Array[String],
+}
+
+fn AppScenario.new(name: String, description: String, cells: Array[String]): AppScenario {
+    { name, description, cells }
+}
+
+/// 场景加载器
+fn load_scenario(name: String): AppScenario | Error {
+    match name {
+        "smart_camera" => Ok(
+            AppScenario.new(
+                "智能相机",
+                "用于 AI 安全监控的智能相机系统",
+                ["camera"]
+            )
+        ),
+        _ => Err(Error.Other("未知场景: " + name))
+    }
+}
+
+// ==========================================
+// 主程序 - 串联所有层
+// ==========================================
+
+fn main() {
+    println("╔═══════════════════════════════════════╗")
+    println("║   一多 OS - 四层架构 MVP 演示          ║")
+    println("╚═══════════════════════════════════════╝\n")
+
+    println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    println("第1层: 细胞组合配置 - 加载场景")
+    println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    
+    let scenario_result = load_scenario("smart_camera")
+    match scenario_result {
+        Ok(scenario) => {
+            println("✓ 加载场景: " + scenario.name)
+            println("  描述: " + scenario.description)
+            println("  需要细胞: " + scenario.cells.to_string())
+            
+            println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            println("第2层: 调度整合 - 选择后端")
+            println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            
+            let selector = BackendSelector.new()
+            let backend_result = selector.select_backend(PreferMock)
+            match backend_result {
+                Ok(backend) => {
+                    println("✓ 选择了 Mock 后端")
+                    
+                    println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                    println("第3层: 计算细胞 - 初始化相机细胞")
+                    println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                    
+                    let cell = CameraCell.new(backend)
+                    let info_result = cell.get_device_info()
+                    match info_result {
+                        Ok(info) => println("✓ 设备信息: " + info),
+                        Err(e) => println("✗ 获取信息失败: " + e.to_string()),
+                    }
+                    
+                    println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                    println("第4层: 后端适配器 - 执行操作")
+                    println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                    
+                    let image_result = cell.capture_image()
+                    match image_result {
+                        Ok(image) => println("✓ 捕获图像: " + image),
+                        Err(e) => println("✗ 捕获失败: " + e.to_string()),
+                    }
+                },
+                Err(e) => {
+                    println("✗ 无法选择后端: " + e.to_string())
+                }
+            }
+        },
+        Err(e) => {
+            println("✗ 无法加载场景: " + e.to_string())
+        }
+    }
+    
+    println("\n═════════════════════════════════════════")
+    println("MVP 演示完成！")
+    println("═════════════════════════════════════════")
+}

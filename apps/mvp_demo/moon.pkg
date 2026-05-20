@@ -1,5 +1,0 @@
-// apps/mvp_demo package configuration
-
-options(
-  "is-main": true,
-)

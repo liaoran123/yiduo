@@ -1,1 +1,5 @@
+// yiduo package configuration
 
+options(
+  "is-main": true,
+)

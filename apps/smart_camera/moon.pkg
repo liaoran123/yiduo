@@ -1,5 +1,0 @@
-// 智能摄像头应用的依赖定义
-
-options(
-  "is-main": true,
-)

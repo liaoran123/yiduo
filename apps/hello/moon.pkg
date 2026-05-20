@@ -1,5 +1,0 @@
-// apps/hello package configuration
-
-options(
-  "is-main": true,
-)

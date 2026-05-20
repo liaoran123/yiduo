@@ -1,5 +1,0 @@
-// MVP package configuration
-
-options(
-  "is-main": true,
-)

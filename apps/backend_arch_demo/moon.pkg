@@ -1,5 +1,0 @@
-// Backend Architecture Demo package configuration
-
-options(
-  "is-main": true,
-)
