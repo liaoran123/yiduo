@@ -1,0 +1,5 @@
+// 细胞组合器演示的依赖定义
+
+options(
+  "is-main": true,
+)

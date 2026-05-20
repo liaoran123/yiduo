@@ -1,0 +1,42 @@
+# 一多操作系统 - 后端适配器配置
+# 参考文档：后端适配器架构设计，可编程的调度系统
+
+device:
+  name: "yiduo-dev-kit"
+  
+  # 相机能力配置
+  capabilities:
+    camera:
+      # 首选后端
+      primary: libcamera
+      # 降级选项
+      fallbacks:
+        - opencv
+        - mock
+      # 选择策略
+      strategy: prefer-native
+      # 健康检查
+      health_check:
+        enabled: true
+        interval_seconds: 10
+        
+    audio:
+      primary: pulseaudio
+      fallbacks:
+        - alsa
+        - mock
+      strategy: prefer-compatibility
+      
+    storage:
+      primary: posix
+      fallbacks:
+        - inmemory
+        - mock
+      strategy: prefer-performance
+      
+    display:
+      primary: wayland
+      fallbacks:
+        - x11
+        - mock
+      strategy: prefer-native
