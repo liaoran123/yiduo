@@ -1,26 +1,16 @@
-#一多 OS 文档网站配置
+# 一多 OS 文档网站配置
 title: 一多 OS - 下一代操作系统
-description: 基于生物学思维的操作系统设计，形而上者谓之道，形而下者谓之器
-baseurl: "/yiduo" # 您的仓库名称，前面加上斜杠
-url: "https://yourusername.github.io" # 您的 GitHub Pages URL
-author: 一多 OS 团队
+description: 基于生物学思维的操作系统设计
+baseurl: "" # 保持空，如果使用 username.github.io/yiduo
+url: "" # 保持空
 
-# Architect 主题配置
-remote_theme: pages-themes/architect@v0.2.0
-plugins:
-  - jekyll-remote-theme
+# 主题配置
+theme: minima
 
-# 其他 Jekyll 配置
-markdown: kramdown
-highlighter: rouge
-
-# 导航栏配置
-header_pages:
-  - architecture/011.生物学构架.md
-  - architecture/012.数字生命体架构设计 Checklist.md
-
-# 排除文件
+# 排除不需要的文件
 exclude:
-  - README.md
-  - Gemfile
-  - Gemfile.lock
+  - "*.md"
+  - "*.txt"
+  - "**/*.md"
+  - "**/*.txt"
+  - !index.md
