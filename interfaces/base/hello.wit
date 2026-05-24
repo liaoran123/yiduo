@@ -1,0 +1,9 @@
+package yiduo:base/hello;
+
+interface hello-world {
+    say-hello: func(name: string) -> string;
+}
+
+world hello-world {
+    export hello-world;
+}

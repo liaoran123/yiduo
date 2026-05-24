@@ -1,0 +1,10 @@
+apiVersion: yiduo.dev/v1alpha1
+kind: Application
+metadata:
+  name: my-hello-app
+  version: "1.0.0"
+  description: "第一个一多 OS 应用"
+spec:
+  components:
+    - name: hello
+      type: yiduo.base/hello-world:1.0.0

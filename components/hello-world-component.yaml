@@ -1,0 +1,23 @@
+apiVersion: yiduo.dev/v1alpha1
+kind: Component
+metadata:
+  name: hello-world
+  namespace: yiduo.base
+  version: "1.0.0"
+  description: "一多 OS Hello World 示例组件"
+  author: "Yiduo Team"
+spec:
+  provides:
+    - interface: yiduo:base/hello-world
+      wit-file: "../interfaces/base/hello.wit"
+  
+  implementations:
+    - name: hello-wasm
+      type: wasm
+      description: "Hello World 的 Wasm 实现"
+      platforms: ["linux", "windows", "macos"]
+      wasm-module: "./impl/hello-world.wasm"
+  
+  default-strategy:
+    preferred: hello-wasm
+    fallbacks: []
