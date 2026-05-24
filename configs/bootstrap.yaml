@@ -1,0 +1,42 @@
+# 一多 OS 启动配置 - 造物主的一念之间
+# 这就是 "意志" - 告诉系统"我需要什么"，而不是"怎么做"
+
+system:
+  name: Yiduo OS MVP
+  version: 0.1.0
+  description: 一多操作系统最小启动器
+
+# 链式骨架 - 血液系统
+chain:
+  foundation:
+    - base/types
+    - base/error
+
+  core:
+    - env/component
+    - config/loader
+
+  extensions:
+    - env/fs
+
+# 加载的组件（器官） - DNA片段
+components:
+  - name: wasm-runtime
+    type: native
+    description: Wasm运行时组件
+    provides:
+      - wasm-executor
+    required: true
+
+  - name: config-parser
+    type: native
+    description: 配置解析组件
+    provides:
+      - config-loader
+    required: true
+
+# 最小启动配置
+bootstrap:
+  mode: minimal
+  log-level: info
+  first-component: wasm-runtime

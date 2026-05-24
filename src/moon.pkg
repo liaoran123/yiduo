@@ -1,0 +1,8 @@
+// 一多 OS 主包 - 高性能调度系统
+// 依赖：调度器、配置、组件、核心
+
+options(
+  "is-main": true,
+)
+
+deps: ["@scheduler", "@config", "@component", "@core"]

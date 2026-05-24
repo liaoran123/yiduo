@@ -1,5 +1,4 @@
-// yiduo package configuration
+// yiduo 模块根包
+// 源代码在 src/ 目录下
 
-options(
-  "is-main": true,
-)
+deps: []
