@@ -338,3 +338,116 @@ fn get_component_info(self: Scheduler, id: Int) -> String {
     "<无效>"
   }
 }
+
+// ==================== 能力匹配机制（扩展性增强） ====================
+
+/// 检查组件是否具备某个能力
+fn has_capability(self: Scheduler, comp_id: Int, capability: String) -> Bool {
+  if comp_id >= 0 && comp_id < self.max_components {
+    match self.components[comp_id] {
+      Some(comp) => list_contains(comp.capabilities, capability),
+      None => false
+    }
+  } else {
+    false
+  }
+}
+
+/// 查找具备某能力的组件（返回第一个找到的）
+fn find_component_by_capability(self: Scheduler, capability: String) -> Option<Int> {
+  let mut i = 0
+  while i < self.max_components {
+    if self.has_capability(i, capability) {
+      return Some(i)
+    }
+    i = i + 1
+  }
+  None
+}
+
+/// 查找所有具备某能力的组件
+fn find_all_components_by_capability(self: Scheduler, capability: String) -> List[Int] {
+  let mut ids: List[Int] = []
+  let mut i = 0
+  while i < self.max_components {
+    if self.has_capability(i, capability) {
+      ids = i :: ids
+    }
+    i = i + 1
+  }
+  list_reverse(ids)
+}
+
+/// 按能力发送消息（解耦组件ID，更灵活）
+fn send_by_capability(
+  self: Scheduler,
+  from: Int,
+  capability: String,
+  msg: @core.Message,
+  priority: @core.MessagePriority
+) -> (Scheduler, Bool) {
+  match self.find_component_by_capability(capability) {
+    Some(to_id) => {
+      // 根据消息类型发送
+      match msg {
+        @core.Message::SmallMessage{payload, ..} => self.send_small(from, to_id, payload, priority),
+        @core.Message::MediumMessage{handle, ..} => self.send_medium(from, to_id, parse_int(handle), priority),
+        @core.Message::LargeMessage{handle, access_mode, ..} => self.send_large(from, to_id, parse_int(handle), access_mode, priority)
+      }
+    },
+    None => {
+      println("[Scheduler] ⚠ 找不到具备能力的组件: " + capability)
+      (self, false)
+    }
+  }
+}
+
+/// 辅助函数：检查 List 中是否包含元素
+fn list_contains(list: List[String], item: String) -> Bool {
+  match list {
+    Nil => false,
+    Cons(head, tail) => head == item || list_contains(tail, item)
+  }
+}
+
+/// 辅助函数：反转 List
+fn list_reverse(list: List[Int]) -> List[Int] {
+  fn reverse_acc(l: List[Int], acc: List[Int]) -> List[Int] {
+    match l {
+      Nil => acc,
+      Cons(head, tail) => reverse_acc(tail, Cons(head, acc))
+    }
+  }
+  reverse_acc(list, Nil)
+}
+
+/// 辅助函数：解析 Int（简单版本）
+fn parse_int(s: String) -> Int {
+  if s.length() <= 0 { return -1 }
+  let bytes = s.to_bytes()
+  let mut result = 0
+  let mut i = 0
+  while i < bytes.length() {
+    let byte = bytes[i]
+    if byte.to_int() >= 48 && byte.to_int() <= 57 {
+      result = result * 10 + (byte.to_int() - 48)
+    }
+    i = i + 1
+  }
+  result
+}
+
+/// 发送通用消息（需要补充这个函数）
+fn send_message(
+  self: Scheduler,
+  from: Int,
+  to: Int,
+  msg: @core.Message,
+  priority: @core.MessagePriority
+) -> (Scheduler, Bool) {
+  match msg {
+    @core.Message::SmallMessage{payload, ..} => self.send_small(from, to, payload, priority),
+    @core.Message::MediumMessage{handle, ..} => self.send_medium(from, to, parse_int(handle), priority),
+    @core.Message::LargeMessage{handle, access_mode, ..} => self.send_large(from, to, parse_int(handle), access_mode, priority)
+  }
+}
