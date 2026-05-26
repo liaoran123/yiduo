@@ -1,6 +1,12 @@
 /// 一多 OS 高性能可编程调度系统（优化版）
 /// 优化：Int ID 替代 String，FixedArray 替代 Map，哈希查找→索引访问
 
+/// ==================== 系统契约常量 ====================
+/// 调度核心的固定 ID（系统契约）
+const SCHEDULER_CORE_ID: Int = 0
+/// 调度核心的组件类型标识
+const COMPONENT_TYPE_NATIVE_CORE: String = "native-core"
+
 /// 组件状态
 enum ComponentStatus {
   Created
@@ -16,7 +22,6 @@ struct ComponentInfo {
   name: String
   component_type: String
   status: ComponentStatus
-  capabilities: List[String]
 }
 
 /// 调度器（优化版）
@@ -205,6 +210,13 @@ fn dispatch(self: Scheduler, msg: @core.Message) -> Scheduler {
     @core.Message::MediumMessage{to, ..} => (parse_int(to), true)
     @core.Message::LargeMessage{to, ..} => (parse_int(to), true)
   }
+  
+  // 检查是否是发给调度核心自己的消息（系统契约）
+  if to_id == SCHEDULER_CORE_ID {
+    println("[Scheduler] 收到给自己的消息（核心处理）")
+    return self.handle_core_message(msg)
+  }
+  
   if to_id >= 0 && to_id < self.max_components {
     match self.components[to_id] {
       Some(comp) => {
@@ -245,7 +257,7 @@ fn run_loop(self: Scheduler, max_iter: Int) -> Scheduler {
   while i < max_iter {
     s = s.process_one()
     i = i + 1
-  }
+  }，
   Scheduler::{
     high_queue: s.high_queue, normal_queue: s.normal_queue, low_queue: s.low_queue,
     pool: s.pool, components: s.components, max_components: self.max_components, is_running: false
@@ -293,7 +305,7 @@ fn print_status(self: Scheduler) {
   let (free, alloced) = self.pool_status()
   println("")
   println("══════════════════════════════════════════════")
-  println("║    一多 OS 调度系统状态（优化版）   ║")
+  println("║    一多 OS 调度系统状态（简化版）   ║")
   println("══════════════════════════════════════════════")
   println("组件数量: " + self.component_count().to_string())
   println("高优队列: " + self.high_queue_length().to_string() + " 待处理")
@@ -339,87 +351,7 @@ fn get_component_info(self: Scheduler, id: Int) -> String {
   }
 }
 
-// ==================== 能力匹配机制（扩展性增强） ====================
-
-/// 检查组件是否具备某个能力
-fn has_capability(self: Scheduler, comp_id: Int, capability: String) -> Bool {
-  if comp_id >= 0 && comp_id < self.max_components {
-    match self.components[comp_id] {
-      Some(comp) => list_contains(comp.capabilities, capability),
-      None => false
-    }
-  } else {
-    false
-  }
-}
-
-/// 查找具备某能力的组件（返回第一个找到的）
-fn find_component_by_capability(self: Scheduler, capability: String) -> Option<Int> {
-  let mut i = 0
-  while i < self.max_components {
-    if self.has_capability(i, capability) {
-      return Some(i)
-    }
-    i = i + 1
-  }
-  None
-}
-
-/// 查找所有具备某能力的组件
-fn find_all_components_by_capability(self: Scheduler, capability: String) -> List[Int] {
-  let mut ids: List[Int] = []
-  let mut i = 0
-  while i < self.max_components {
-    if self.has_capability(i, capability) {
-      ids = i :: ids
-    }
-    i = i + 1
-  }
-  list_reverse(ids)
-}
-
-/// 按能力发送消息（解耦组件ID，更灵活）
-fn send_by_capability(
-  self: Scheduler,
-  from: Int,
-  capability: String,
-  msg: @core.Message,
-  priority: @core.MessagePriority
-) -> (Scheduler, Bool) {
-  match self.find_component_by_capability(capability) {
-    Some(to_id) => {
-      // 根据消息类型发送
-      match msg {
-        @core.Message::SmallMessage{payload, ..} => self.send_small(from, to_id, payload, priority),
-        @core.Message::MediumMessage{handle, ..} => self.send_medium(from, to_id, parse_int(handle), priority),
-        @core.Message::LargeMessage{handle, access_mode, ..} => self.send_large(from, to_id, parse_int(handle), access_mode, priority)
-      }
-    },
-    None => {
-      println("[Scheduler] ⚠ 找不到具备能力的组件: " + capability)
-      (self, false)
-    }
-  }
-}
-
-/// 辅助函数：检查 List 中是否包含元素
-fn list_contains(list: List[String], item: String) -> Bool {
-  match list {
-    Nil => false,
-    Cons(head, tail) => head == item || list_contains(tail, item)
-  }
-}
-
-/// 辅助函数：反转 List
-fn list_reverse(list: List[Int]) -> List[Int] {
-  fn reverse_acc(l: List[Int], acc: List[Int]) -> List[Int] {
-    match l {
-      Nil => acc,
-      Cons(head, tail) => reverse_acc(tail, Cons(head, acc))
-    }
-  }
-  reverse_acc(list, Nil)
-}
+// ==================== 辅助函数 ====================
 
 /// 辅助函数：解析 Int（简单版本）
 fn parse_int(s: String) -> Int {
@@ -437,7 +369,15 @@ fn parse_int(s: String) -> Int {
   result
 }
 
-/// 发送通用消息（需要补充这个函数）
+/// 调度核心消息处理（处理发给自己的消息）
+fn handle_core_message(self: Scheduler, msg: @core.Message) -> Scheduler {
+  println("[Scheduler] 调度核心处理消息")
+  // 未来可以在这里添加具体的核心消息处理逻辑
+  // 比如：组件管理、调度配置、系统查询等
+  self
+}
+
+/// 发送通用消息
 fn send_message(
   self: Scheduler,
   from: Int,
