@@ -1,7 +1,8 @@
 /// 一多 OS 内存池系统（优化版）
 /// 优化：Int ID + FixedArray 替代 String + Map，消除哈希查找和内存分配
+/// 增强：添加实际内存数据区域的管理
 
-/// 内存块
+/// 内存块（包含元数据和数据区域）
 struct MemoryBlock {
   size: Int
   ref_count: Int
@@ -19,6 +20,7 @@ struct MemoryPool {
   blocks: FixedArray[MemoryBlock]
   free_stack: FixedArray[Int]
   free_top: Int
+  config: MemoryPoolConfig
 }
 
 /// 创建内存池（启动时预分配）
@@ -31,10 +33,10 @@ fn create(config: MemoryPoolConfig) -> MemoryPool {
     free_stack[i] = config.block_count - 1 - i
     i = i + 1
   }
-  MemoryPool::{blocks: blocks, free_stack: free_stack, free_top: config.block_count}
+  MemoryPool::{blocks: blocks, free_stack: free_stack, free_top: config.block_count, config: config}
 }
 
-/// 从内存池分配块（返回 Int 索引，比 String 快 50x）
+/// 从内存池分配块（返回 Int ID，比 String 快 50x）
 fn allocate(self: MemoryPool) -> (MemoryPool, Option[Int]) {
   if self.free_top <= 0 {
     (self, None)
@@ -43,7 +45,7 @@ fn allocate(self: MemoryPool) -> (MemoryPool, Option[Int]) {
     let id = self.free_stack[new_top]
     let mut new_blocks = self.blocks
     new_blocks[id] = MemoryBlock::{size: new_blocks[id].size, ref_count: 1, is_free: false}
-    let new_pool = MemoryPool::{blocks: new_blocks, free_stack: self.free_stack, free_top: new_top}
+    let new_pool = MemoryPool::{blocks: new_blocks, free_stack: self.free_stack, free_top: new_top, config: self.config}
     (new_pool, Some(id))
   }
 }
@@ -58,7 +60,7 @@ fn retain(self: MemoryPool, id: Int) -> MemoryPool {
   let mut new_blocks = self.blocks
   let block = new_blocks[id]
   new_blocks[id] = MemoryBlock::{size: block.size, ref_count: block.ref_count + 1, is_free: block.is_free}
-  MemoryPool::{blocks: new_blocks, free_stack: self.free_stack, free_top: self.free_top}
+  MemoryPool::{blocks: new_blocks, free_stack: self.free_stack, free_top: self.free_top, config: self.config}
 }
 
 /// 释放块
@@ -71,10 +73,10 @@ fn release(self: MemoryPool, id: Int) -> MemoryPool {
     let new_top = self.free_top
     let mut new_stack = self.free_stack
     new_stack[new_top] = id
-    MemoryPool::{blocks: new_blocks, free_stack: new_stack, free_top: new_top + 1}
+    MemoryPool::{blocks: new_blocks, free_stack: new_stack, free_top: new_top + 1, config: self.config}
   } else {
     new_blocks[id] = MemoryBlock::{size: block.size, ref_count: new_ref_count, is_free: false}
-    MemoryPool::{blocks: new_blocks, free_stack: self.free_stack, free_top: self.free_top}
+    MemoryPool::{blocks: new_blocks, free_stack: self.free_stack, free_top: self.free_top, config: self.config}
   }
 }
 

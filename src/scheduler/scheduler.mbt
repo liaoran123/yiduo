@@ -1,5 +1,6 @@
 /// 一多 OS 高性能可编程调度系统（优化版）
 /// 优化：Int ID 替代 String，FixedArray 替代 Map，哈希查找→索引访问
+/// 优化：统一使用 Int ID，消除不必要的字符串转换
 
 /// ==================== 系统契约常量 ====================
 /// 调度核心的固定 ID（系统契约）
@@ -39,7 +40,7 @@ struct Scheduler {
 /// 创建调度器
 fn create() -> Scheduler {
   let dummy_msg = @core.Message::SmallMessage{
-    from: "", to: "",
+    from: 0, to: 0,
     payload: @core.SmallPayload{msg_type: 0, data: []}
   }
   let dummy_comp: Option[ComponentInfo] = None
@@ -81,7 +82,7 @@ fn register(self: Scheduler, info: ComponentInfo) -> (Scheduler, Int) {
 /// 发送小消息
 fn send_small(self: Scheduler, from: Int, to: Int, payload: @core.SmallPayload, priority: @core.MessagePriority) -> (Scheduler, Bool) {
   let msg = @core.Message::SmallMessage{
-    from: from.to_string(), to: to.to_string(), payload: payload
+    from: from, to: to, payload: payload
   }
   self.send_to_queue(msg, priority)
 }
@@ -94,7 +95,7 @@ fn send_medium(self: Scheduler, from: Int, to: Int, handle: Int, priority: @core
     pool: new_pool, components: self.components, max_components: self.max_components, is_running: self.is_running
   }
   let msg = @core.Message::MediumMessage{
-    from: from.to_string(), to: to.to_string(), handle: handle.to_string()
+    from: from, to: to, handle: handle
   }
   new_self.send_to_queue(msg, priority)
 }
@@ -107,7 +108,7 @@ fn send_large(self: Scheduler, from: Int, to: Int, handle: Int, access_mode: @co
     pool: new_pool, components: self.components, max_components: self.max_components, is_running: self.is_running
   }
   let msg = @core.Message::LargeMessage{
-    from: from.to_string(), to: to.to_string(), handle: handle.to_string(), access_mode: access_mode
+    from: from, to: to, handle: handle, access_mode: access_mode
   }
   new_self.send_to_queue(msg, priority)
 }
@@ -172,43 +173,12 @@ fn process_one(self: Scheduler) -> Scheduler {
   }
 }
 
-/// 解析消息中的 to_id（Int 格式）
-fn parse_to_id(msg: @core.Message) -> (Int, Bool) {
-  let to_str = match msg {
-    @core.Message::SmallMessage{to, ..} => to
-    @core.Message::MediumMessage{to, ..} => to
-    @core.Message::LargeMessage{to, ..} => to
-  }
-  (parse_int(to_str), match msg {
-    @core.Message::SmallMessage{..} => false
-    _ => true
-  })
-}
-
-/// 简单字符串转整数
-fn parse_int(s: String) -> Int {
-  // 简化实现，实际可以使用标准库
-  // 消息中存储的已经是数字字符串，如 "1", "2"
-  if s.length() <= 0 { return -1 }
-  let bytes = s.to_bytes()
-  let mut result = 0
-  let mut i = 0
-  while i < bytes.length() {
-    let byte = bytes[i]
-    if byte.to_int() >= 48 && byte.to_int() <= 57 {
-      result = result * 10 + (byte.to_int() - 48)
-    }
-    i = i + 1
-  }
-  result
-}
-
 /// 分发消息给目标组件（使用 Int 索引直接访问 FixedArray）
 fn dispatch(self: Scheduler, msg: @core.Message) -> Scheduler {
-  let (to_id, need_release) = match msg {
-    @core.Message::SmallMessage{to, ..} => (parse_int(to), false)
-    @core.Message::MediumMessage{to, ..} => (parse_int(to), true)
-    @core.Message::LargeMessage{to, ..} => (parse_int(to), true)
+  let (to_id, need_release, handle) = match msg {
+    @core.Message::SmallMessage{to, ..} => (to, false, 0)
+    @core.Message::MediumMessage{to, handle, ..} => (to, true, handle)
+    @core.Message::LargeMessage{to, handle, ..} => (to, true, handle)
   }
   
   // 检查是否是发给调度核心自己的消息（系统契约）
@@ -222,11 +192,6 @@ fn dispatch(self: Scheduler, msg: @core.Message) -> Scheduler {
       Some(comp) => {
         println("[Scheduler] 分发消息 → " + comp.name + " (ID:" + to_id.to_string() + ")")
         if need_release {
-          let handle = match msg {
-            @core.Message::MediumMessage{handle, ..} => parse_int(handle)
-            @core.Message::LargeMessage{handle, ..} => parse_int(handle)
-            _ => -1
-          }
           Scheduler::{
             high_queue: self.high_queue, normal_queue: self.normal_queue, low_queue: self.low_queue,
             pool: @core.MemoryPool::release(self.pool, handle),
@@ -257,7 +222,7 @@ fn run_loop(self: Scheduler, max_iter: Int) -> Scheduler {
   while i < max_iter {
     s = s.process_one()
     i = i + 1
-  }，
+  }
   Scheduler::{
     high_queue: s.high_queue, normal_queue: s.normal_queue, low_queue: s.low_queue,
     pool: s.pool, components: s.components, max_components: self.max_components, is_running: false
@@ -351,24 +316,6 @@ fn get_component_info(self: Scheduler, id: Int) -> String {
   }
 }
 
-// ==================== 辅助函数 ====================
-
-/// 辅助函数：解析 Int（简单版本）
-fn parse_int(s: String) -> Int {
-  if s.length() <= 0 { return -1 }
-  let bytes = s.to_bytes()
-  let mut result = 0
-  let mut i = 0
-  while i < bytes.length() {
-    let byte = bytes[i]
-    if byte.to_int() >= 48 && byte.to_int() <= 57 {
-      result = result * 10 + (byte.to_int() - 48)
-    }
-    i = i + 1
-  }
-  result
-}
-
 /// 调度核心消息处理（处理发给自己的消息）
 fn handle_core_message(self: Scheduler, msg: @core.Message) -> Scheduler {
   println("[Scheduler] 调度核心处理消息")
@@ -387,7 +334,7 @@ fn send_message(
 ) -> (Scheduler, Bool) {
   match msg {
     @core.Message::SmallMessage{payload, ..} => self.send_small(from, to, payload, priority),
-    @core.Message::MediumMessage{handle, ..} => self.send_medium(from, to, parse_int(handle), priority),
-    @core.Message::LargeMessage{handle, access_mode, ..} => self.send_large(from, to, parse_int(handle), access_mode, priority)
+    @core.Message::MediumMessage{handle, ..} => self.send_medium(from, to, handle, priority),
+    @core.Message::LargeMessage{handle, access_mode, ..} => self.send_large(from, to, handle, access_mode, priority)
   }
 }

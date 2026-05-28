@@ -1,0 +1,59 @@
+# 🧬 一多 OS 生物学架构演示：智能相机
+# 四元架构：意志（配置） + DNA（组件） + 树形（结构） + 链式（血液流动）
+
+# ============== 意志配置 ==============
+organism_name: "智能相机生物"
+version: "1.0.0"
+
+# ============== 树形结构（生长路径） ==============
+tree_structure:
+  root:
+    name: "智能相机生命体"
+    children:
+      - name: "摄像头器官"
+        requires: ["硬件设备"]
+      - name: "AI检测器器官"
+        requires: ["摄像头器官"]
+      - name: "显示器器官"
+        requires: ["AI检测器器官"]
+
+# ============== DNA组件列表 ==============
+dna_components:
+  - name: "摄像头器官"
+    type: "wasm"
+    capability: "camera.capture"
+    priority: "high"
+    channel_id: 0  # 视频流频道
+
+  - name: "AI检测器器官"
+    type: "wasm"
+    capability: "ai.detection"
+    priority: "high"
+    channel_id: 0  # 订阅视频流
+    publish_channel_id: 1  # 发布检测结果
+
+  - name: "显示器器官"
+    type: "wasm"
+    capability: "display.output"
+    priority: "medium"
+    channel_id: 1  # 订阅检测结果
+
+# ============== 事件频道（血液流动） ==============
+event_channels:
+  - name: "视频流"
+    type: "high_throughput"
+    channel_id: 0
+
+  - name: "AI检测结果"
+    type: "normal"
+    channel_id: 1
+
+  - name: "控制信号"
+    type: "control"
+    channel_id: 2
+
+# ============== 关键设计说明 ==============
+# 🧠 AI大脑不介入每帧处理！
+#    1. 血液流动（视频流）完全由内联核心处理，无延迟
+#    2. 神经反射（局部均衡）处理突发负载，毫秒级响应
+#    3. AI大脑只做：每10秒一次的宏观决策（如是否切换到省电模式）

@@ -8,27 +8,29 @@
 
 | 文档 | 说明 |
 |------|------|
-| [001.架构设计.md](./001.架构设计.md) | 系统整体架构、四元哲学、数据流 |
-| [002.模块参考.md](./002.模块参考.md) | 五个核心模块详解（core/scheduler/config/component/bootstrap） |
-| [003.性能优化.md](./003.性能优化.md) | 高性能优化策略、优化前后对比、接近 C 的路径 |
+| [004.快速开始.md](./004.快速开始.md) | 快速上手，环境准备，开发命令 |
+| [001.架构设计.md](./001.架构设计.md) | 系统整体架构、四元哲学、数据流、系统契约 |
+| [002.模块参考.md](./002.模块参考.md) | 五个核心模块详解（core/scheduler/config/bootstrap） |
+| [005.API参考.md](./005.API参考.md) | 所有API完整文档 |
+| [003.性能优化.md](./003.性能优化.md) | 高性能优化策略（Int ID、FixedArray、无装箱） |
 
 ## 源代码结构
 
 ```
 src/
 ├── moon.pkg              # 主包配置（is-main: true）
-├── bootstrap.mbt         # 最小启动器（主入口）
+├── bootstrap.mbt         # 最小启动器（自举入口）
 ├── core/                 # 核心基础包
 │   ├── moon.pkg
-│   ├── message.mbt       # 消息系统（三种模式）
-│   ├── ring_buffer.mbt   # 零拷贝环形队列
-│   └── memory_pool.mbt   # 预分配内存池
+│   ├── message.mbt       # 消息系统（三种模式，Int ID）
+│   ├── ring_buffer.mbt   # 零拷贝环形队列（无装箱）
+│   └── memory_pool.mbt   # 预分配内存池（FixedArray+栈）
 ├── scheduler/            # 调度系统核心
 │   ├── moon.pkg
-│   └── scheduler.mbt     # 高性能调度器
+│   └── scheduler.mbt     # 高性能调度器（Int ID 索引）
 ├── config/               # 配置解析模块
 │   ├── moon.pkg
-│   └── config_loader.mbt # YAML/JSON 配置解析
+│   └── config_loader.mbt # 配置解析（内置/外部）
 └── component/            # 组件管理模块
     ├── moon.pkg
     └── loader.mbt        # Wasm/Native 组件加载
