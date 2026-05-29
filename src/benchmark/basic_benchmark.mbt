@@ -74,9 +74,10 @@ fn main() {
   println("");
 }
 
-/// 简单的计时函数（模拟）
+/// 简单的计时函数（使用静态计数器）
+let mut tick_counter: Int = 0
+
 fn get_tick_count() -> Int {
-  // 这里应该使用系统时钟
-  // 临时用简单的实现，实际需要接入 MoonBit 的时间 API
-  123456 // 占位
+  tick_counter = tick_counter + 1
+  tick_counter
 }

@@ -1,4 +1,4 @@
-/// 一多 OS 配置加载模块（简化版）
+/// 一多 OS 配置加载模块（带缓存+懒加载）
 /// 移除了 capabilities 相关字段，直接使用 ID 通信
 
 /// 配置类型
@@ -36,6 +36,108 @@ struct AppConfig {
   spec: Spec
 }
 
+/// 配置缓存项
+struct CacheEntry {
+  config: AppConfig
+  load_time: Int
+  access_count: Int
+}
+
+/// 配置缓存（使用简单的哈希映射）
+struct ConfigCache {
+  entries: List[(String, CacheEntry)] // (path, entry)
+  max_entries: Int
+}
+
+/// 懒加载配置
+struct LazyConfig {
+  path: String
+  cached: Option[AppConfig]
+  loaded: Bool
+}
+
+/// ==================== 缓存管理 ====================
+
+/// 创建空缓存
+fn create_cache(max_entries: Int) -> ConfigCache {
+  ConfigCache {
+    entries: [],
+    max_entries: max_entries
+  }
+}
+
+/// 从缓存获取配置
+fn get_from_cache(cache: ConfigCache, path: String) -> Option[AppConfig] {
+  let found = cache.entries.find(fn(entry) {
+    entry.0 == path
+  })
+  match found {
+    Some(entry) => Some(entry.1.config)
+    None => None
+  }
+}
+
+/// 添加到缓存
+fn add_to_cache(cache: ConfigCache, path: String, config: AppConfig, load_time: Int) -> ConfigCache {
+  // 先检查是否已存在
+  let (existing, new_entries) = cache.entries.partition(fn(entry) {
+    entry.0 == path
+  })
+  
+  // 创建新条目
+  let new_entry = (path, CacheEntry {
+    config: config,
+    load_time: load_time,
+    access_count: 1
+  })
+  
+  // 如果条目太多，移除访问最少的
+  let mut entries_to_keep = new_entries
+  if entries_to_keep.length() >= cache.max_entries && cache.max_entries > 0 {
+    // 简单策略：移除最后一个
+    entries_to_keep = entries_to_keep.take(cache.max_entries - 1)
+  }
+  
+  ConfigCache {
+    entries: new_entry :: entries_to_keep,
+    max_entries: cache.max_entries
+  }
+}
+
+/// ==================== 懒加载管理 ====================
+
+/// 创建懒加载配置
+fn create_lazy_config(path: String) -> LazyConfig {
+  LazyConfig {
+    path: path,
+    cached: None,
+    loaded: false
+  }
+}
+
+/// 获取懒加载配置（按需加载）
+fn get_lazy_config(lazy: LazyConfig) -> (LazyConfig, Result[AppConfig, String]) {
+  if lazy.loaded && lazy.cached.is_some() {
+    (lazy, Ok(lazy.cached.get()))
+  } else {
+    // 实际加载
+    let result = load(lazy.path)
+    match result {
+      Ok(config) => {
+        let new_lazy = LazyConfig {
+          path: lazy.path,
+          cached: Some(config),
+          loaded: true
+        }
+        (new_lazy, Ok(config))
+      }
+      Err(e) => (lazy, Err(e))
+    }
+  }
+}
+
+/// ==================== 解析配置 ====================
+
 /// 解析配置文件
 fn parse_file(path: String, config_type: ConfigType) -> Result[AppConfig, String] {
   println("[Config] 解析配置文件: " + path)
@@ -49,10 +151,40 @@ fn parse_file(path: String, config_type: ConfigType) -> Result[AppConfig, String
     metadata: Metadata::{name: "demo-app", version: "1.0.0", description: Some("演示应用")},
     spec: Spec::{
       components: [
-        ComponentConfig::{name: "logger", component_type: "native", description: Some("日志服务"), path: Some("./components/logger"), required: true}
+        ComponentConfig::{name: "logger", component_type: "native", description: Some("日志服务"), path: Some("./components/logger"), required: true},
+        ComponentConfig::{name: "counter", component_type: "wasm", description: Some("计数器"), path: Some("./components/counter"), required: true},
+        ComponentConfig::{name: "display", component_type: "wasm", description: Some("显示器"), path: Some("./components/display"), required: true}
       ]
     }
   })
+}
+
+/// 从路径加载配置（带缓存支持）
+fn load_with_cache(cache: ConfigCache, path: String) -> (ConfigCache, Result[AppConfig, String]) {
+  // 先尝试从缓存获取
+  match get_from_cache(cache, path) {
+    Some(config) => {
+      println("[Config] 缓存命中: " + path)
+      (cache, Ok(config))
+    }
+    None => {
+      // 缓存未命中，实际加载
+      let config_type = if path.ends_with(".yaml") || path.ends_with(".yml") {
+        YAML
+      } else {
+        JSON
+      }
+      let load_start = 0 // 简化时间戳
+      let result = parse_file(path, config_type)
+      match result {
+        Ok(config) => {
+          let new_cache = add_to_cache(cache, path, config, load_start)
+          (new_cache, Ok(config))
+        }
+        Err(e) => (cache, Err(e))
+      }
+    }
+  }
 }
 
 /// 从路径加载配置
