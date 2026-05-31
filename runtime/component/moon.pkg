@@ -1,0 +1,7 @@
+import {
+  "username/yiduo/runtime/core",
+}
+
+options(
+  deps: [ ],
+)

@@ -1,0 +1,55 @@
+apiVersion: yiduo.dev/v1alpha1
+kind: Component
+metadata:
+  name: wasm-runtime
+  namespace: yiduo.sys
+  version: "0.1.0"
+  description: "WAMR WebAssembly 微运行时 - 提供 Wasm 沙箱执行能力"
+
+spec:
+  provides:
+    - interface: yiduo:sys/wasm-runtime
+      description: "Wasm 字节码加载、实例化、沙箱执行、函数调用"
+
+  # 多实现：用户可选择真实 WAMR 或 Stub
+  # 构建元数据（build.*）是唯一真实来源：
+  #   build_wamr.ps1 从此处读取所有路径和依赖，动态生成 moon.pkg
+  implementations:
+    - name: wamr-real
+      description: "真实 WAMR 运行时 - 高性能，需预编译 libvmlib.a"
+      type: native
+      default: true
+      platforms: [windows, linux, macos]
+      metadata:
+        performance: 95
+        compatibility: 80
+      build:
+        native-library: "third_party/wasm-micro-runtime/build/liblibiwasm.a"
+        include-paths:
+          - "third_party/wasm-micro-runtime/core/iwasm/include"
+        system-libs:
+          windows: ["ws2_32", "ntdll"]
+          linux: ["pthread", "dl", "rt"]
+          macos: ["pthread"]
+        linker-opts: "-Wl,--whole-archive {native-library} -Wl,--no-whole-archive {system-libs}"
+        cflags: ""
+
+    - name: wamr-stub
+      description: "Stub 回退实现 - 零依赖，无实际执行能力"
+      type: native
+      platforms: [all]
+      metadata:
+        performance: 0
+        compatibility: 100
+      build:
+        native-library: null
+        include-paths: []
+        system-libs: {}
+        linker-opts: ""
+        cflags: ""
+
+  # 默认策略：优先真实 WAMR，找不到则回退到 Stub
+  default-strategy:
+    preferred: wamr-real
+    fallbacks: [wamr-stub]
+    policy: prefer-compatibility

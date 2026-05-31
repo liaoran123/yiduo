@@ -1,39 +1,20 @@
-# 一多 OS 启动配置 - 造物主的一念之间
-# 这就是 "意志" - 告诉系统"我需要什么"，而不是"怎么做"
+# 一多 OS 启动配置 - 系统内部引导文件
+# 用户无需直接编辑此文件
+# 组件配置请放在 configs/components/ 目录下
 
 system:
   name: Yiduo OS MVP
   version: 0.1.0
   description: 一多操作系统最小启动器
 
-# 链式骨架 - 血液系统
-chain:
-  foundation:
-    - base/types
-    - base/error
-
-  core:
-    - env/component
-    - config/loader
-
-  extensions:
-    - env/fs
-
-# 加载的组件（器官） - DNA片段
-components:
-  - name: wasm-runtime
-    type: native
-    description: Wasm运行时组件
-    provides:
-      - wasm-executor
-    required: true
-
-  - name: config-parser
-    type: native
-    description: 配置解析组件
-    provides:
-      - config-loader
-    required: true
+# Wasm 运行时配置
+# 用户在此选择 WAMR 实现（遵循 008 组件配置规范）
+#   - wamr-real: 真实 WAMR，需预编译 libvmlib.a
+#   - wamr-stub: 零依赖回退，无实际执行能力
+runtime:
+  max-components: 32
+  max-memory-per-instance: 64
+  implementation: wamr-real
 
 # 最小启动配置
 bootstrap:

@@ -1,0 +1,104 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/yiduo/runtime/scheduler"
+
+import {
+  "username/yiduo/runtime/component",
+  "username/yiduo/runtime/core",
+}
+
+// Values
+pub const SCHEDULER_CORE_ID : Int = 0
+
+pub fn component_type_native_core() -> @component.ComponentType
+
+pub fn create() -> Scheduler
+
+pub fn print_status(Scheduler) -> Unit
+
+pub fn register(Scheduler, ComponentInfo) -> (Scheduler, Int)
+
+pub fn run_loop(Scheduler, Int) -> Scheduler
+
+pub fn send_small(Scheduler, Int, Int, @core.SmallPayload, @core.MessagePriority) -> (Scheduler, Bool)
+
+// Errors
+
+// Types and methods
+type ComponentData
+
+pub struct ComponentInfo {
+  name : String
+  component_type : @component.ComponentType
+  status : ComponentStatus
+  last_comm_with : FixedArray[Int]
+  last_comm_count : FixedArray[Int]
+}
+pub fn ComponentInfo::create(String, @component.ComponentType, ComponentStatus, FixedArray[Int], FixedArray[Int]) -> Self
+pub fn ComponentInfo::create_simple(String, @component.ComponentType, ComponentStatus) -> Self
+
+type ComponentManager
+pub fn ComponentManager::handle_memory_pressure(Self) -> Self
+
+pub enum ComponentStatus {
+  Created
+  Initialized
+  Running
+  Paused
+  Stopped
+  Error
+}
+pub fn ComponentStatus::created() -> Self
+pub fn ComponentStatus::error() -> Self
+pub fn ComponentStatus::initialized() -> Self
+pub fn ComponentStatus::paused() -> Self
+pub fn ComponentStatus::running() -> Self
+pub fn ComponentStatus::stopped() -> Self
+
+pub struct HandlerRegistry {
+  handlers : FixedArray[((Int, Int, @core.SmallPayload) -> Unit)?]
+  max_handlers : Int
+}
+pub fn HandlerRegistry::create(Int) -> Self
+pub fn HandlerRegistry::get_handler(Self, Int) -> ((Int, Int, @core.SmallPayload) -> Unit)?
+pub fn HandlerRegistry::invoke(Self, Int, Int, @core.SmallPayload) -> Bool
+pub fn HandlerRegistry::register_handler(Self, Int, (Int, Int, @core.SmallPayload) -> Unit) -> Self
+pub fn HandlerRegistry::unregister(Self, Int) -> Self
+
+type NeuralScheduler
+
+pub struct Scheduler {
+  high_queue : @core.RingBuffer[@core.Message]
+  normal_queue : @core.RingBuffer[@core.Message]
+  low_queue : @core.RingBuffer[@core.Message]
+  pool : @core.MemoryPool
+  mem_manager : @core.MemoryManager
+  components : FixedArray[ComponentInfo?]
+  max_components : Int
+  is_running : Bool
+  batch_size : Int
+  debug_log : Bool
+  handlers : HandlerRegistry
+  wasm_runtime : @component.WasmRuntime?
+}
+pub fn Scheduler::component_name(Self, Int) -> String
+pub fn Scheduler::create() -> Self
+pub fn Scheduler::create_with_config(@core.MemoryManager, Int, Int) -> Self
+pub fn Scheduler::find_component_id(Self, String) -> Int?
+pub fn Scheduler::load_wasm(Self, Int, Bytes) -> (Self, Result[Unit, String])
+pub fn Scheduler::mark_component_stopped(Self, Int) -> Self
+pub fn Scheduler::print_status(Self) -> Unit
+pub fn Scheduler::process_one(Self) -> Self
+pub fn Scheduler::register(Self, ComponentInfo) -> (Self, Int)
+pub fn Scheduler::register_handler(Self, Int, (Int, Int, @core.SmallPayload) -> Unit) -> Self
+pub fn Scheduler::register_wasm_handler(Self, Int, (Int, Int, @core.SmallPayload) -> Unit) -> Self
+pub fn Scheduler::run_loop(Self, Int) -> Self
+pub fn Scheduler::send_message(Self, Int, Int, @core.Message, @core.MessagePriority) -> (Self, Bool)
+pub fn Scheduler::send_small(Self, Int, Int, @core.SmallPayload, @core.MessagePriority) -> (Self, Bool)
+pub fn Scheduler::set_debug_log(Self, Bool) -> Self
+pub fn Scheduler::set_wasm_runtime(Self, @component.WasmRuntime) -> Self
+pub fn Scheduler::unregister_handler(Self, Int) -> Self
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,9 @@
+import {
+  "username/yiduo/runtime/core",
+}
+
+options(
+  supported_targets: [ "native" ],
+  deps: [ ],
+  "native-stub": [ "c_src/fs_adapter.c" ],
+)

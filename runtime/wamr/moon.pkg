@@ -1,0 +1,16 @@
+import {
+  "username/yiduo/runtime/component",
+  "username/yiduo/runtime/core",
+}
+
+options(
+  supported_targets: [ "native" ],
+  deps: [ ],
+  "native-stub": [ "c_src/wamr_adapter.c", "c_src/native_imports.c" ],
+  link: {
+    "native": {
+      "cc-flags": "-DWAMR_AVAILABLE=1 -ID:/yiduo/third_party/wasm-micro-runtime/core/iwasm/include",
+      "cc-link-flags": "-Wl,--whole-archive D:/yiduo/third_party/wasm-micro-runtime/build/liblibiwasm.a -Wl,--no-whole-archive -lws2_32 -lntdll",
+    },
+  },
+)

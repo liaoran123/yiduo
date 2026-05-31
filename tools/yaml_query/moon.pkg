@@ -1,0 +1,11 @@
+import {
+  "username/yiduo/runtime/config",
+  "username/yiduo/runtime/fs",
+  "username/yiduo/runtime/core",
+}
+
+options(
+  "is-main": true,
+  supported_targets: [ "native" ],
+  link: { "native": { "cc-link-flags": "-Wl,--subsystem,console" } },
+)

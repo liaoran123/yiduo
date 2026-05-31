@@ -131,7 +131,63 @@ combinations:
 
 ---
 
+## 🧩 组件配置层次（008 规范）
+
+WAMR 等系统组件遵循 [008.组件配置格式规范](操作系统/01.核心调度系统/008.组件配置格式规范.md) 定义。
+
+### 组件定义
+
+每个组件通过 YAML 声明自己的规格（`provides`）、多种实现（`implementations`）和默认策略（`default-strategy`）：
+
+```yaml
+# configs/components/wamr-runtime.yaml
+apiVersion: yiduo.dev/v1alpha1
+kind: Component
+metadata:
+  name: wasm-runtime
+spec:
+  provides:
+    - interface: yiduo:sys/wasm-runtime
+
+  implementations:
+    - name: wamr-real        # 真实 WAMR
+      type: native
+      default: true
+    - name: wamr-stub        # 零依赖回退
+      type: native
+      platforms: [all]
+
+  default-strategy:
+    preferred: wamr-real
+    fallbacks: [wamr-stub]
+```
+
+### 用户选择
+
+用户在自举配置中选择具体实现：
+
+```yaml
+# configs/bootstrap.yaml
+runtime:
+  implementation: wamr-real   # 用户在此决定
+```
+
+### 构建自举
+
+构建脚本读取配置，自动执行对应的构建流程：
+
+```powershell
+.\scripts\build_wamr.ps1  # 读取 bootstrap.yaml → 构建 WAMR → 配置 moon.pkg
+```
+
+### 配置即意志
+
+上述机制遵循**四元架构**的"意志"层：用户通过声明式配置文件表达意图，系统自行解读并执行，无需修改代码。
+
+---
+
 ## 📚 相关文档
 
 - 设计原则：`interfaces/技术文档/设计原则：如何做到足够优雅、足够抽象.md`
 - README：`README.md`
+- 组件配置规范：`操作系统/01.核心调度系统/008.组件配置格式规范.md`

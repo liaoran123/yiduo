@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/yiduo/runtime"
+
+import {
+  "username/yiduo/runtime/component",
+  "username/yiduo/runtime/core",
+  "username/yiduo/runtime/scheduler",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct AccumulatorComponent {
+  handler : (Int, Int, @core.SmallPayload) -> Unit
+  get_total : () -> Int
+  label : String
+}
+pub fn AccumulatorComponent::create(String) -> Self
+pub fn AccumulatorComponent::create_component_info(Self, @component.ComponentType) -> @scheduler.ComponentInfo
+
+pub struct CounterComponent {
+  handler : (Int, Int, @core.SmallPayload) -> Unit
+  get_count : () -> Int
+  label : String
+}
+pub fn CounterComponent::create(String) -> Self
+pub fn CounterComponent::create_component_info(Self, @component.ComponentType) -> @scheduler.ComponentInfo
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,66 @@
+# 一多 OS 应用配置
+# 应用级配置：定义具体业务组件的加载和编排
+
+application:
+  name: yiduo-demo-app
+  version: 1.0.0
+  description: 一多操作系统演示应用
+
+# 运行时配置
+runtime:
+  scheduler:
+    max-components: 32
+    batch-size: 8
+    affinity-enabled: true
+  memory:
+    pool-block-size: 4096
+    pool-block-count: 64
+    max-handles: 128
+
+# 组件定义
+components:
+  - name: event-bus
+    type: wasm
+    path: /components/event-bus
+    description: 事件总线，系统的血液系统
+    memory-priority: high
+    required: true
+    depends-on:
+      - scheduler-core
+    provides:
+      - yiduo.event-bus.v1
+
+  - name: scheduler
+    type: wasm
+    path: /components/scheduler
+    description: 调度器组件，可自举可升级
+    memory-priority: high
+    required: true
+    depends-on:
+      - event-bus
+    provides:
+      - yiduo.scheduler.v1
+
+  - name: ai-brain
+    type: wasm
+    path: /components/ai-brain
+    description: AI大脑，做低频宏观决策
+    memory-priority: normal
+    required: false
+    depends-on:
+      - event-bus
+    provides:
+      - yiduo.ai-brain.v1
+
+  - name: logger
+    type: native
+    path: /components/logger
+    description: 日志服务
+    memory-priority: low
+    required: false
+
+# 启动顺序
+bootstrap-order:
+  - event-bus
+  - scheduler
+  - ai-brain

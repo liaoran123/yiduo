@@ -1,0 +1,85 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/yiduo/runtime/component"
+
+import {
+  "username/yiduo/runtime/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct Capability {
+  interface_name : String
+  version : String
+}
+
+pub struct ComponentConfig {
+  name : String
+  component_type : ComponentType
+  config_data : String
+  memory_priority : MemoryPriority
+}
+
+pub struct ComponentInstance {
+  id : Int
+  state : ComponentState
+  config : ComponentConfig
+  handle : Int
+}
+
+pub struct ComponentLoader {
+  registered : Array[ComponentInstance]
+  search_paths : Array[String]
+}
+pub fn ComponentLoader::create() -> Self
+pub fn ComponentLoader::discover(Self, String) -> Array[String]
+pub fn ComponentLoader::load(Self, String, ComponentType, String) -> Result[ComponentInstance, String]
+pub fn ComponentLoader::load_from_config(Self, String, String, String) -> Result[ComponentInstance, String]
+pub fn ComponentLoader::loaded_by_type(Self, ComponentType) -> Array[ComponentInstance]
+pub fn ComponentLoader::loaded_list(Self) -> Array[String]
+pub fn ComponentLoader::unload(Self, String) -> Self
+
+pub enum ComponentState {
+  Created
+  Initialized
+  Running
+  Paused
+  Stopped
+  Failed
+}
+
+pub enum ComponentType {
+  Native
+  Wasm
+  MoonBit
+}
+pub fn ComponentType::from_string(String) -> Self?
+pub fn ComponentType::moonbit() -> Self
+pub fn ComponentType::native() -> Self
+pub fn ComponentType::to_int(Self) -> Int
+pub fn ComponentType::to_string(Self) -> String
+pub fn ComponentType::wasm() -> Self
+pub impl Eq for ComponentType
+
+pub enum MemoryPriority {
+  Critical
+  Normal
+  Low
+}
+
+pub struct WasmRuntime {
+  invoke : (Int, Int, @core.SmallPayload) -> Unit
+  register : (Int, (Int, Int, @core.SmallPayload) -> Unit) -> Unit
+  load : (Int, Bytes) -> Result[Unit, String]
+  deallocate : (Int) -> Unit
+}
+pub fn WasmRuntime::create_simulated(Int) -> Self
+pub fn WasmRuntime::from_fields((Int, Int, @core.SmallPayload) -> Unit, (Int, (Int, Int, @core.SmallPayload) -> Unit) -> Unit, (Int, Bytes) -> Result[Unit, String], (Int) -> Unit) -> Self
+
+// Type aliases
+pub type NativeMessageHandler = (Int, Int, @core.SmallPayload) -> Unit
+
+// Traits
+

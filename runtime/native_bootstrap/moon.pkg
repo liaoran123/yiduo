@@ -1,0 +1,10 @@
+import {
+  "username/yiduo/runtime/boot",
+  "username/yiduo/runtime/config",
+  "username/yiduo/runtime/fs",
+}
+
+options(
+  "is-main": true,
+  supported_targets: [ "native" ],
+)

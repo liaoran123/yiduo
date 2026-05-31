@@ -1,0 +1,14 @@
+apiVersion: yiduo.dev/v1alpha1
+kind: Component
+metadata:
+  name: logger
+  namespace: yiduo.sys
+  version: "0.1.0"
+  description: "日志服务组件 - 系统日志记录"
+spec:
+  type: native
+  source: builtin/logger
+  required: true
+  provides:
+    - interface: yiduo:sys/log
+      description: "日志记录能力"

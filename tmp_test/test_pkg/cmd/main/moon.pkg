@@ -1,0 +1,7 @@
+// import {
+//   "username/test_pkg" @lib,
+// }
+
+options(
+  "is-main": true,
+)

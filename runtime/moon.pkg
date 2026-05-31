@@ -1,0 +1,11 @@
+import {
+  "username/yiduo/runtime/scheduler",
+  "username/yiduo/runtime/config",
+  "username/yiduo/runtime/core",
+  "username/yiduo/runtime/component",
+  "username/yiduo/runtime/boot",
+}
+
+options(
+  "is-main": true,
+)

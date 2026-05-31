@@ -1,0 +1,164 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/yiduo/runtime/config"
+
+import {
+  "username/yiduo/runtime/core",
+  "username/yiduo/runtime/scheduler",
+}
+
+// Values
+pub fn apply_hot_update(ConfigChange, @core.FileSystem, @scheduler.Scheduler, ConfigManager, HotUpdateConfig) -> (@scheduler.Scheduler, HotUpdateResult)
+
+pub fn get_mapping(YamlNode, String) -> YamlNode?
+
+pub fn get_scalar(YamlNode, String) -> String
+
+pub fn get_seq(YamlNode, String) -> YamlNode?
+
+pub fn load_bootstrap_from_fs(@core.FileSystem, String) -> Result[YiduoBootstrapConfig, String]
+
+pub fn load_component_descriptor_from_fs(@core.FileSystem, String) -> Result[ComponentDescriptor, String]
+
+pub fn parse_bootstrap_yaml(String) -> Result[YiduoBootstrapConfig, String]
+
+pub fn parse_yaml(String) -> Result[YamlNode, String]
+
+pub fn scan_component_dir(@core.FileSystem, String) -> Result[Array[ComponentDescriptor], String]
+
+pub fn seq_mappings(YamlNode) -> Array[YamlNode]
+
+pub fn seq_scalars(YamlNode) -> Array[String]
+
+// Errors
+
+// Types and methods
+pub struct BootstrapConfig {
+  mode : BootstrapMode
+  log_level : LogLevel
+  first_component : String
+}
+pub fn BootstrapConfig::create(BootstrapMode, LogLevel, String) -> Self
+
+pub enum BootstrapMode {
+  Minimal
+  Standard
+  Full
+}
+pub fn BootstrapMode::from_string(String) -> Self?
+pub fn BootstrapMode::to_string(Self) -> String
+
+pub enum ChangeType {
+  Created
+  Updated
+  Deleted
+}
+pub fn ChangeType::to_string(Self) -> String
+
+pub struct ComponentDescriptor {
+  name : String
+  ns : String?
+  version : String?
+  component_type : String
+  source : String?
+  required : Bool
+  description : String?
+  provides : Array[InterfaceEntry]
+  requires_interfaces : Array[DependencyEntry]
+}
+pub fn ComponentDescriptor::create(String, String?, String?, String, String?, Bool, String?, Array[InterfaceEntry], Array[DependencyEntry]) -> Self
+
+pub struct ConfigChange {
+  file_path : String
+  component_name : String
+  change_type : ChangeType
+  previous_hash : Int
+  new_hash : Int
+}
+
+pub struct ConfigManager {
+  config_dir : String
+  listener_next_id : Int
+  listeners : Array[(Int, (ConfigChange) -> Unit)]
+  change_history : Array[ConfigChange]
+}
+pub fn ConfigManager::change_history(Self) -> Array[ConfigChange]
+pub fn ConfigManager::create(String) -> Self
+pub fn ConfigManager::create_config(Self, @core.FileSystem, String, String) -> Result[ConfigChange, String]
+pub fn ConfigManager::delete_config(Self, @core.FileSystem, String) -> Result[ConfigChange, String]
+pub fn ConfigManager::list_configs(Self, @core.FileSystem) -> Result[Array[String], String]
+pub fn ConfigManager::notify_listeners(Self, ConfigChange) -> Self
+pub fn ConfigManager::on_change(Self, (ConfigChange) -> Unit) -> (Self, Int)
+pub fn ConfigManager::read_and_parse(Self, @core.FileSystem, String) -> Result[ComponentDescriptor, String]
+pub fn ConfigManager::read_config(Self, @core.FileSystem, String) -> Result[String, String]
+pub fn ConfigManager::remove_listener(Self, Int) -> Self
+pub fn ConfigManager::write_config(Self, @core.FileSystem, String, String) -> Result[ConfigChange, String]
+
+pub struct DependencyEntry {
+  name : String
+  interface_name : String
+  required : Bool
+  version : String?
+  description : String?
+}
+pub fn DependencyEntry::create(String, String, Bool, String?, String?) -> Self
+
+pub struct HotUpdateConfig {
+  enabled : Bool
+  auto_register_on_create : Bool
+  auto_unregister_on_delete : Bool
+}
+pub fn HotUpdateConfig::default() -> Self
+
+pub enum HotUpdateResult {
+  Success(String)
+  Skipped(String)
+  Failed(String)
+}
+pub fn HotUpdateResult::to_string(Self) -> String
+
+pub struct InterfaceEntry {
+  interface_name : String
+  wit_file : String?
+  description : String?
+}
+pub fn InterfaceEntry::create(String, String?, String?) -> Self
+
+pub enum LogLevel {
+  Debug
+  Info
+  Warn
+  Error
+}
+pub fn LogLevel::from_string(String) -> Self?
+pub fn LogLevel::to_string(Self) -> String
+
+pub struct RuntimeConfig {
+  max_components : Int
+  max_memory_per_instance : Int
+  runtime_type : String
+}
+pub fn RuntimeConfig::default() -> Self
+
+pub struct SystemMeta {
+  name : String
+  version : String
+  description : String?
+}
+pub fn SystemMeta::create(String, String, String?) -> Self
+
+pub enum YamlNode {
+  YamlScalar(String)
+  YamlMapping(Array[(String, YamlNode)])
+  YamlSeq(Array[YamlNode])
+}
+
+pub struct YiduoBootstrapConfig {
+  system : SystemMeta
+  bootstrap : BootstrapConfig
+  runtime : RuntimeConfig?
+}
+
+// Type aliases
+
+// Traits
+

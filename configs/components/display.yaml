@@ -1,0 +1,19 @@
+apiVersion: yiduo.dev/v1alpha1
+kind: Component
+metadata:
+  name: display
+  namespace: yiduo.cap
+  version: "0.1.0"
+  description: "显示器组件 - 结果展示"
+spec:
+  type: wasm
+  source: builtin/display
+  required: true
+  provides:
+    - interface: yiduo:cap/display
+      description: "数据展示能力"
+  requires:
+    - name: scheduler
+      interface: yiduo:sys/scheduler
+      required: true
+      description: "依赖调度器接收消息"

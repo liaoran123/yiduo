@@ -1,0 +1,14 @@
+apiVersion: yiduo.dev/v1alpha1
+kind: Component
+metadata:
+  name: counter
+  namespace: yiduo.lib
+  version: "0.1.0"
+  description: "计数器组件 - 演示用"
+spec:
+  type: wasm
+  source: builtin/counter
+  required: true
+  provides:
+    - interface: yiduo:lib/counter
+      description: "数值计数功能"

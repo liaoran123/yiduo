@@ -1,0 +1,19 @@
+apiVersion: yiduo.dev/v1alpha1
+kind: Component
+metadata:
+  name: scheduler
+  namespace: yiduo.sys
+  version: "0.1.0"
+  description: "系统调度器 - 核心调度单元"
+spec:
+  type: native
+  source: builtin/scheduler
+  required: true
+  provides:
+    - interface: yiduo:sys/scheduler
+      description: "组件调度和消息路由"
+  requires:
+    - name: memory
+      interface: yiduo:sys/memory
+      required: true
+      description: "内存管理能力"

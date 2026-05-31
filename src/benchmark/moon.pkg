@@ -1,8 +1,0 @@
-// 一多 OS 基准测试包
-// 测试调度系统性能
-
-options(
-  "is-main": true,
-)
-
-deps: ["@scheduler", "@core"]

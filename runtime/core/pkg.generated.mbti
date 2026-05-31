@@ -1,0 +1,145 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/yiduo/runtime/core"
+
+// Values
+pub fn create(Int, Int) -> EventBus
+
+pub fn create_local_balancer(Int, Int) -> LocalBalancer
+
+// Errors
+
+// Types and methods
+pub enum AccessMode {
+  ReadOnly
+  ReadWrite
+}
+
+type ChannelType
+
+type CircuitBreaker
+pub fn CircuitBreaker::create(Int, CircuitConfig) -> Self
+
+type CircuitConfig
+
+type CircuitState
+
+type ComponentPriority
+
+type EventBus
+
+pub struct FileSystem {
+  read_to_string : (String) -> Result[String, String]
+  list_dir : (String) -> Result[Array[String], String]
+  write_to_string : (String, String) -> Result[Unit, String]
+  delete_file : (String) -> Result[Unit, String]
+  file_exists : (String) -> Bool
+}
+pub fn FileSystem::from_fields((String) -> Result[String, String], (String) -> Result[Array[String], String]) -> Self
+pub fn FileSystem::from_fields_full((String) -> Result[String, String], (String) -> Result[Array[String], String], (String, String) -> Result[Unit, String], (String) -> Result[Unit, String], (String) -> Bool) -> Self
+
+pub struct HandleInfo {
+  owner_id : Int
+  ref_count : Int
+  size : Int
+  is_valid : Bool
+  mem_id : Int
+}
+
+type HealthScore
+
+type LocalBalancer
+
+pub struct MemoryBlock {
+  size : Int
+  ref_count : Int
+  is_free : Bool
+}
+
+pub struct MemoryManager {
+  pool : MemoryPool
+  max_handles : Int
+  handle_table : FixedArray[HandleInfo?]
+  free_stack : FixedArray[Int]
+  free_top : Int
+  next_handle_id : Int
+}
+pub fn MemoryManager::allocate_handle(Self, Int, Int) -> (Self, Int?)
+pub fn MemoryManager::create(MemoryPool, Int) -> Self
+pub fn MemoryManager::free_handle(Self, Int, Int) -> (Self, Bool)
+pub fn MemoryManager::get_handle_info(Self, Int) -> HandleInfo?
+pub fn MemoryManager::get_stats(Self) -> (Int, Int, Int)
+pub fn MemoryManager::print_status(Self) -> Unit
+pub fn MemoryManager::retain_handle(Self, Int, Int) -> (Self, Bool)
+pub fn MemoryManager::transfer_ownership(Self, Int, Int, Int) -> (Self, Bool)
+
+pub struct MemoryPool {
+  blocks : FixedArray[MemoryBlock]
+  free_stack : FixedArray[Int]
+  free_top : Int
+  config : MemoryPoolConfig
+}
+pub fn MemoryPool::allocate(Self) -> (Self, Int?)
+pub fn MemoryPool::allocate_size(Self, Int) -> (Self, Int?)
+pub fn MemoryPool::allocated_count(Self) -> Int
+pub fn MemoryPool::create(MemoryPoolConfig) -> Self
+pub fn MemoryPool::free_count(Self) -> Int
+pub fn MemoryPool::release(Self, Int) -> Self
+pub fn MemoryPool::retain(Self, Int) -> Self
+pub fn MemoryPool::total_blocks(Self) -> Int
+
+pub struct MemoryPoolConfig {
+  block_size : Int
+  block_count : Int
+}
+pub fn MemoryPoolConfig::create(Int, Int) -> Self
+
+pub enum Message {
+  SmallMessage(Int, Int, SmallPayload)
+  MediumMessage(Int, Int, Int, Bool)
+  LargeMessage(Int, Int, Int, AccessMode, Bool)
+}
+pub fn Message::create_large(Int, Int, Int, AccessMode, Bool, MemoryManager) -> (MemoryManager, Self?)
+pub fn Message::create_medium(Int, Int, Int, Bool, MemoryManager) -> (MemoryManager, Self?)
+pub fn Message::create_small(Int, Int, SmallPayload) -> Self
+pub fn Message::large(Int, Int, Int, AccessMode, Bool) -> Self
+pub fn Message::medium(Int, Int, Int, Bool) -> Self
+pub fn Message::on_processed(Self, Int, MemoryManager) -> MemoryManager
+
+pub enum MessagePriority {
+  High
+  Normal
+  Low
+}
+pub fn MessagePriority::high() -> Self
+pub fn MessagePriority::low() -> Self
+pub fn MessagePriority::normal() -> Self
+
+pub struct RingBuffer[T] {
+  buffer : FixedArray[T]
+  capacity : Int
+  read_idx : Int
+  write_idx : Int
+}
+pub fn[T] RingBuffer::capacity(Self[T]) -> Int
+pub fn[T] RingBuffer::create(Int, T) -> Self[T]
+pub fn[T] RingBuffer::dequeue(Self[T]) -> (Self[T], T?)
+pub fn[T] RingBuffer::enqueue(Self[T], T) -> (Self[T], Bool)
+pub fn[T] RingBuffer::is_empty(Self[T]) -> Bool
+pub fn[T] RingBuffer::length(Self[T]) -> Int
+pub fn[T] RingBuffer::peek(Self[T]) -> T?
+
+pub struct SmallPayload {
+  msg_type : Int
+  data : Array[Byte]
+}
+pub fn SmallPayload::create(Int, Array[Byte]) -> Self
+
+pub struct Subscription {
+  subscriber_id : Int
+  callback : (Int, Int) -> Unit
+}
+
+// Type aliases
+
+// Traits
+
