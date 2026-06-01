@@ -13,6 +13,8 @@ pub fn component_type_native_core() -> @component.ComponentType
 
 pub fn create() -> Scheduler
 
+pub fn[T] drain_adaptive(AdaptiveBatchContext, @core.SPSCBuffer[T], @core.SPSCBuffer[T], @core.SPSCBuffer[T]) -> (AdaptiveBatchContext, @core.SPSCBuffer[T], @core.SPSCBuffer[T], @core.SPSCBuffer[T], Array[T])
+
 pub fn print_status(Scheduler) -> Unit
 
 pub fn register(Scheduler, ComponentInfo) -> (Scheduler, Int)
@@ -24,6 +26,15 @@ pub fn send_small(Scheduler, Int, Int, @core.SmallPayload, @core.MessagePriority
 // Errors
 
 // Types and methods
+pub struct AdaptiveBatchContext {
+  batch_size : Int
+  min_batch : Int
+  max_batch : Int
+  drain_round : Int
+  stats : SchedulerMetrics
+}
+pub fn AdaptiveBatchContext::create() -> Self
+
 type ComponentData
 
 pub struct ComponentInfo {
@@ -97,6 +108,58 @@ pub fn Scheduler::send_small(Self, Int, Int, @core.SmallPayload, @core.MessagePr
 pub fn Scheduler::set_debug_log(Self, Bool) -> Self
 pub fn Scheduler::set_wasm_runtime(Self, @component.WasmRuntime) -> Self
 pub fn Scheduler::unregister_handler(Self, Int) -> Self
+
+pub struct SchedulerMetrics {
+  total_messages : Int
+  high_priority_count : Int
+  normal_priority_count : Int
+  low_priority_count : Int
+  batch_count : Int
+  total_batch_size : Int
+  max_batch_size : Int
+  min_batch_size : Int
+  direct_channel_count : Int
+}
+pub fn SchedulerMetrics::create() -> Self
+pub fn SchedulerMetrics::report(Self) -> String
+
+pub struct SchedulerV3 {
+  high_queue : @core.SPSCBuffer[@core.Message]
+  normal_queue : @core.SPSCBuffer[@core.Message]
+  low_queue : @core.SPSCBuffer[@core.Message]
+  pool : @core.MemoryPool
+  mem_manager : @core.MemoryManager
+  components : FixedArray[ComponentInfo?]
+  max_components : Int
+  is_running : Bool
+  batch_size : Int
+  debug_log : Bool
+  handlers : HandlerRegistry
+  wasm_runtime : @component.WasmRuntime?
+  channel_mgr : @core.ChannelManager
+  adaptive_ctx : AdaptiveBatchContext
+  hot_threshold : Int
+}
+pub fn SchedulerV3::component_name(Self, Int) -> String
+pub fn SchedulerV3::create() -> Self
+pub fn SchedulerV3::create_direct_channel(Self, Int, Int, Int) -> (Self, Int)
+pub fn SchedulerV3::create_with_config(@core.MemoryManager, Int, Int) -> Self
+pub fn SchedulerV3::find_channel(Self, Int, Int) -> Int?
+pub fn SchedulerV3::find_component_id(Self, String) -> Int?
+pub fn SchedulerV3::get_adaptive_stats(Self) -> String
+pub fn SchedulerV3::get_channel_stats(Self, Int) -> (Int64, Int64, Int64)
+pub fn SchedulerV3::high_queue_length(Self) -> Int
+pub fn SchedulerV3::low_queue_length(Self) -> Int
+pub fn SchedulerV3::normal_queue_length(Self) -> Int
+pub fn SchedulerV3::process_batch(Self) -> Self
+pub fn SchedulerV3::process_one(Self) -> Self
+pub fn SchedulerV3::register(Self, ComponentInfo) -> (Self, Int)
+pub fn SchedulerV3::register_handler(Self, Int, (Int, Int, @core.SmallPayload) -> Unit) -> Self
+pub fn SchedulerV3::run_loop(Self, Int) -> Self
+pub fn SchedulerV3::send_message(Self, Int, Int, @core.Message, @core.MessagePriority) -> (Self, Bool)
+pub fn SchedulerV3::send_small(Self, Int, Int, @core.SmallPayload, @core.MessagePriority) -> (Self, Bool)
+pub fn SchedulerV3::set_debug_log(Self, Bool) -> Self
+pub fn SchedulerV3::set_wasm_runtime(Self, @component.WasmRuntime) -> Self
 
 // Type aliases
 

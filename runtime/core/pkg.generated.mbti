@@ -14,6 +14,16 @@ pub enum AccessMode {
   ReadWrite
 }
 
+pub struct ChannelManager {
+  channels : Array[DirectChannel?]
+}
+pub fn ChannelManager::create(Int) -> Self
+pub fn ChannelManager::create_channel(Self, Int, Int, Int) -> (Self, Int)
+pub fn ChannelManager::find_channel(Self, Int, Int) -> Int?
+pub fn ChannelManager::get(Self, Int) -> DirectChannel?
+pub fn ChannelManager::len(Self) -> Int
+pub fn ChannelManager::set(Self, Int, DirectChannel) -> Self
+
 type ChannelType
 
 type CircuitBreaker
@@ -24,6 +34,35 @@ type CircuitConfig
 type CircuitState
 
 type ComponentPriority
+
+pub struct DirectChannel {
+  a_to_b : SPSCBuffer[DirectMessage]
+  b_to_a : SPSCBuffer[DirectMessage]
+  a_to_b_count : Int64
+  b_to_a_count : Int64
+  component_a : Int
+  component_b : Int
+  dropped_count : Int64
+}
+pub fn DirectChannel::create(Int, Int, Int) -> Self
+pub fn DirectChannel::recv_a(Self) -> (Self, DirectMessage?)
+pub fn DirectChannel::recv_a_batch(Self, Int) -> (Self, Array[DirectMessage])
+pub fn DirectChannel::recv_b(Self) -> (Self, DirectMessage?)
+pub fn DirectChannel::recv_b_batch(Self, Int) -> (Self, Array[DirectMessage])
+pub fn DirectChannel::send_a_to_b(Self, DirectMessage) -> Self
+pub fn DirectChannel::send_b_to_a(Self, DirectMessage) -> Self
+pub fn DirectChannel::stats(Self) -> (Int64, Int64, Int64)
+
+pub struct DirectMessage {
+  sender : Int
+  receiver : Int
+  payload : Int64
+  msg_type : Int
+  has_inline : Bool
+}
+pub fn DirectMessage::create_inline(Int, Int, Int, Array[Byte]) -> Self
+pub fn DirectMessage::create_with_ptr(Int, Int, Int, Int64) -> Self
+pub fn DirectMessage::get_inline_data(Self) -> Array[Byte]
 
 type EventBus
 
@@ -127,6 +166,22 @@ pub fn[T] RingBuffer::enqueue(Self[T], T) -> (Self[T], Bool)
 pub fn[T] RingBuffer::is_empty(Self[T]) -> Bool
 pub fn[T] RingBuffer::length(Self[T]) -> Int
 pub fn[T] RingBuffer::peek(Self[T]) -> T?
+
+pub struct SPSCBuffer[T] {
+  buffer : FixedArray[T]
+  size : Int
+  mask : Int
+  read_idx : Int
+  write_idx : Int
+}
+pub fn[T] SPSCBuffer::capacity(Self[T]) -> Int
+pub fn[T] SPSCBuffer::create(Int, T) -> Self[T]
+pub fn[T] SPSCBuffer::dequeue(Self[T]) -> (Self[T], T?)
+pub fn[T] SPSCBuffer::dequeue_batch(Self[T], Int) -> (Self[T], Array[T])
+pub fn[T] SPSCBuffer::enqueue(Self[T], T) -> (Self[T], Bool)
+pub fn[T] SPSCBuffer::enqueue_batch(Self[T], Array[T]) -> (Self[T], Int)
+pub fn[T] SPSCBuffer::is_empty(Self[T]) -> Bool
+pub fn[T] SPSCBuffer::len(Self[T]) -> Int
 
 pub struct SmallPayload {
   msg_type : Int
